@@ -1,6 +1,6 @@
 Trying out some different network architectures for deep learning. 
 
-Continuation from [gelbooru-analysus](../gelbooru-analysis)
+Continuation from [gelbooru-analysis](../../../gelbooru-analysis).
 
 Step 4: Network architecture
 --------------
