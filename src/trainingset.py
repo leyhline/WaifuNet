@@ -9,7 +9,7 @@ Created on Wed Jan 11 07:52:00 2017
 import cv2
 import numpy as np
 from getpass import getpass
-from .pcloud import PCloud
+from pcloud import PCloud
 
 
 # TODO Look further what this does before you use it.
@@ -48,11 +48,13 @@ class TrainingSet:
         Arguments take the path/to/folder in cloud storage.
         """
         x_files, y_files = self._filelist(input_folder, target_folder)
-        self.training = self._create_generator(x_files, y_files)
+        # HACK Set batch size to 1.
+        self.training = self._create_generator(x_files, y_files, 1)
         if validation_folder and validation_target_folder:
             x_vali, y_vali = self._filelist(validation_folder, 
                                             validation_target_folder)
-            self.validation = self._create_generator(x_vali, y_vali)
+            # HACK Set batch size to 1.
+            self.validation = self._create_generator(x_vali, y_vali, 1)
             
     def _filelist(self, input_folder, target_folder):
         """
@@ -71,17 +73,24 @@ class TrainingSet:
             assert check
         return files
         
-    def _create_generator(self, x_files, y_files):
+    def _create_generator(self, x_files, y_files, batch_size=0):
         """
         Returns a generator who holds (x, y) tuples where each tuple
         is a training batch (here: 100 images).
         The generator runs indefinetly over the data.
+        batch_size has to be smaller than 100.
         """
         i = 0
         while True:
             inputs = self._file_to_images(x_files[i])
             targets = self._file_to_array(y_files[i])
-            yield (inputs, targets)
+            # TODO Use variable batch size. Now it's just online SGD.
+            if batch_size:
+                for j in range(len(inputs)):
+                    yield (np.expand_dims(inputs[j], axis=0),
+                           np.expand_dims(targets[j], axis=0))
+            else:
+                yield (inputs, targets)
             i += 1
             # If the end of the list is reached start again.
             if i == len(x_files):
