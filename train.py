@@ -19,7 +19,7 @@ VALIDATION_BATCHES = 1000
 VALIDATION_SAMPLES = VALIDATION_BATCHES * SAMPLES_PER_BATCH
 EPOCHES=3
 QUERY_SIZE=10
-WORKERS=4
+WORKERS=4  # Only relevant when pickle_save is set in fit_generator()
 
 
 def train():
@@ -40,8 +40,7 @@ def train():
                                    CSVLogger("train.log", append=False)],
                         validation_data=tset.validation,
                         nb_val_samples=VALIDATION_SAMPLES,
-                        max_q_size=QUERY_SIZE,
-                        nb_worker=WORKERS)
+                        max_q_size=QUERY_SIZE)
     return model, history
 
 
