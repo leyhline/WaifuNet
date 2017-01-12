@@ -35,6 +35,7 @@ class TrainingSet:
         username = input("Username: ")
         password = getpass()
         self.cloud = PCloud(username, password)
+        print("Success!")
         # These are initialized with the corresponding method:
         self.training = None
         self.validation = None

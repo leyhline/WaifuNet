@@ -30,6 +30,7 @@ def train():
     model.compile("sgd",
                   "categorical_crossentropy",
                   metrics=["categorical_crossentropy"])
+    print("Starting training.")
     history = model.fit_generator(
                         tset.training,
                         TRAINING_SAMPLES,
