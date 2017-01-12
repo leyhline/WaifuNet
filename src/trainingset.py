@@ -12,6 +12,7 @@ from getpass import getpass
 from pcloud import PCloud
 
 
+# TODO Look further what this does before you use it.
 def image_preprocessing(img):
     """Seems it is necessary to subtract the mean of the RGB."""
     # From keras.applications.imagenet_utils
