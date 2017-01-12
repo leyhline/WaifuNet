@@ -12,6 +12,16 @@ from getpass import getpass
 from pcloud import PCloud
 
 
+def image_preprocessing(img):
+    """Seems it is necessary to subtract the mean of the RGB."""
+    # From keras.applications.imagenet_utils
+    # Zero-center by mean pixel
+    img[:, :, :, 0] -= 103.939
+    img[:, :, :, 1] -= 116.779
+    img[:, :, :, 2] -= 123.68
+    return img
+
+
 class TrainingSet:
     """
     Class for getting generators to iterate over training examples.
@@ -80,6 +90,7 @@ class TrainingSet:
         raw = self.cloud.get_file(file[1])
         raw_array = np.frombuffer(raw.read(), dtype=np.int8)
         montage = cv2.imdecode(raw_array, cv2.IMREAD_COLOR)
+        montage = montage.astype(np.float32, copy=False)
         ysize = montage.shape[0]
         xsize = montage.shape[1]
         ytilesize = ysize // ytiles
