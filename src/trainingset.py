@@ -9,7 +9,7 @@ Created on Wed Jan 11 07:52:00 2017
 import cv2
 import numpy as np
 from getpass import getpass
-from pcloud import PCloud
+from .pcloud import PCloud
 
 
 # TODO Look further what this does before you use it.
