@@ -87,15 +87,15 @@ class TrainingSet:
                 i = 0
     
     def _file_to_images(self, file, xtiles=10, ytiles=10):
-        images = []
         raw = self.cloud.get_file(file[1])
         raw_array = np.frombuffer(raw.read(), dtype=np.int8)
         montage = cv2.imdecode(raw_array, cv2.IMREAD_COLOR)
-        montage = montage.astype(np.float32, copy=False)
         ysize = montage.shape[0]
         xsize = montage.shape[1]
         ytilesize = ysize // ytiles
         xtilesize = xsize // xtiles
+        images = np.empty((xtiles*ytiles, ytilesize, xtilesize, 3),
+                          dtype=np.float32)
         for i in range(xtiles * ytiles):
             yfrom = (i * xtilesize // xsize) * ytilesize
             yto = yfrom + ytilesize
@@ -104,16 +104,19 @@ class TrainingSet:
             print(yfrom, yto, xfrom, xto)
             print(type(yfrom),type(yto),type(xfrom),type(xto))
             image = montage[yfrom:yto, xfrom:xto]
-            images.append(image)
+            images[i] = image
         return images
         
-    def _file_to_array(self, file):
-        arrays = []
+    def _file_to_array(self, file, lines=100):
         mapping = {"dres":0, "japa":1, "nude":2, "scho":3, "shir":4, "swim":5}
+        arrays = np.empty((lines, len(mapping)), dtype=np.float32)
         raw = self.cloud.get_file(file[1])
+        i = 0
         for line in raw:
             line = line.decode()[2:6]
-            array = np.zeros(len(mapping), dtype=np.bool)
+            array = np.zeros(len(mapping), dtype=np.float32)
             array[mapping[line]] = True
-            arrays.append(array)
+            arrays[i] = (array)
+            i += 1
+        assert i == lines
         return arrays
