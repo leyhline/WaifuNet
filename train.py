@@ -15,15 +15,16 @@ import sys
 TRAINING_SAMPLES =   300000
 VALIDATION_SAMPLES = 100000
 EPOCHES=5
-QUERY_SIZE=100
-WORKERS=4  # Only relevant when pickle_save is set in fit_generator()
+BATCH_DIVIDER=20  # Hard to explain... If this one is bigger 
+                  # the batch size will become smaller.
+QUERY_SIZE=10 * BATCH_DIVIDER
 
 
 def train():
     tset = TrainingSet()
     tset.initialize("deeplearning/training", "deeplearning/training_txt",
                     "deeplearning/validation", "deeplearning/validation_txt",
-                    batch_divider=10)
+                    batch_divider=BATCH_DIVIDER)
     model = WaifuVGG16()
     model.compile("sgd",
                   "categorical_crossentropy",
@@ -39,9 +40,7 @@ def train():
                                    CSVLogger("train.log", append=False)],
                         validation_data=tset.validation,
                         nb_val_samples=VALIDATION_SAMPLES,
-                        max_q_size=QUERY_SIZE,
-                        pickle_safe=False,
-                        nb_worker=WORKERS)
+                        max_q_size=QUERY_SIZE)
     return model, history
 
 

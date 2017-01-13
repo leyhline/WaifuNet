@@ -8,7 +8,9 @@ Created on Wed Jan 11 07:52:00 2017
 
 import cv2
 import numpy as np
+import threading
 from getpass import getpass
+from collections import deque
 from .pcloud import PCloud
 
 
@@ -49,13 +51,11 @@ class TrainingSet:
         Arguments take the path/to/folder in cloud storage.
         """
         x_files, y_files = self._filelist(input_folder, target_folder)
-        # HACK Set batch size to 1.
         self.training = self._create_generator(x_files, y_files,
                                                batch_divider)
         if validation_folder and validation_target_folder:
             x_vali, y_vali = self._filelist(validation_folder, 
                                             validation_target_folder)
-            # HACK Set batch size to 1.
             self.validation = self._create_generator(x_vali, y_vali,
                                                      batch_divider)
             
@@ -88,20 +88,17 @@ class TrainingSet:
         if batch_div:
             batch_div = self._find_divider(batch_div, img_per_file)
             batch_size = img_per_file // batch_div
-        i = 0
+        image_generator = self._retrieve_raw_data(x_files)
+        target_generator = self._retrieve_raw_data(y_files)
         while True:
-            inputs = self._file_to_images(x_files[i])
-            targets = self._file_to_array(y_files[i])
+            inputs = self._raw_to_images(next(image_generator))
+            targets = self._raw_to_array(next(target_generator))
             if batch_div:
                 for j in range(0, img_per_file, batch_size):
                     yield (inputs[j:j+batch_size],
                            targets[j:j+batch_size])
             else:
-                yield (inputs, targets)
-            i += 1
-            # If the end of the list is reached start again.
-            if i == len(x_files):
-                i = 0
+                yield inputs, targets
     
     def _find_divider(self, divider, divisor):
         for i in range(divider, 0, -1):
@@ -109,9 +106,50 @@ class TrainingSet:
                 return divider
             else:
                 divider += 1
-                
-    def _file_to_images(self, file, xtiles=10, ytiles=10):
-        raw = self.cloud.get_file(file[1])
+    
+    def _retrieve_raw_data(self, files,
+                           initial_size=4,
+                           lower_limit=3,
+                           step=3):
+        # Initialize queue and append values the first time.
+        queue = deque()
+        temp = files.copy()
+        line = 0
+        # Initialize query with the first few values.
+        for i in range(line, initial_size):
+            raw = self.cloud.get_file(files[i][1])
+            queue.append(raw)
+        line += initial_size
+        lock = False
+        while True:
+            yield queue.popleft()
+            # If the queue is getting too small, download more data and fill it in.
+            if len(queue) < lower_limit:
+                # Start a background process to download the data.
+                if not lock:
+                    raws = []
+                    p = threading.Thread(
+                                    target=self._get_raw_from_cloud,
+                                    args=(files[line:line + step], raws))
+                    p.start()
+                    lock = True
+                # If process finished append its downloaded data to queue.
+                if not p.is_alive() or len(queue) == 0:
+                    p.join()
+                    queue.extend(raws)
+                    lock = False
+                    line += step
+                    # This line is necessary to loop indefinitely over the data.
+                    if line + step > len(files):
+                        files = files[line:]
+                        files.extend(temp)
+                        line = 0
+    
+    def _get_raw_from_cloud(self, files, output):
+        for file in files:
+            output.append(self.cloud.get_file(file[1]))
+        
+    def _raw_to_images(self, raw, xtiles=10, ytiles=10):
         raw_array = np.frombuffer(raw.read(), dtype=np.int8)
         montage = cv2.imdecode(raw_array, cv2.IMREAD_COLOR)
         ysize = montage.shape[0]
@@ -129,10 +167,9 @@ class TrainingSet:
             images[i] = image
         return images
         
-    def _file_to_array(self, file, lines=100):
+    def _raw_to_array(self, raw, lines=100):
         mapping = {"dres":0, "japa":1, "nude":2, "scho":3, "shir":4, "swim":5}
         arrays = np.empty((lines, len(mapping)), dtype=np.bool)
-        raw = self.cloud.get_file(file[1])
         i = 0
         for line in raw:
             line = line.decode()[2:6]
