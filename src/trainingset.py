@@ -41,7 +41,8 @@ class TrainingSet:
         self.validation = None
 
     def initialize(self, input_folder, target_folder,
-                   validation_folder=None, validation_target_folder=None):
+                   validation_folder=None, validation_target_folder=None,
+                   batch_divider=10):
         """
         Initialize generators for iterating over training examples
         and if specified also get generator for validation examples.
@@ -49,12 +50,14 @@ class TrainingSet:
         """
         x_files, y_files = self._filelist(input_folder, target_folder)
         # HACK Set batch size to 1.
-        self.training = self._create_generator(x_files, y_files, 1)
+        self.training = self._create_generator(x_files, y_files,
+                                               batch_divider)
         if validation_folder and validation_target_folder:
             x_vali, y_vali = self._filelist(validation_folder, 
                                             validation_target_folder)
             # HACK Set batch size to 1.
-            self.validation = self._create_generator(x_vali, y_vali, 1)
+            self.validation = self._create_generator(x_vali, y_vali,
+                                                     batch_divider)
             
     def _filelist(self, input_folder, target_folder):
         """
@@ -73,22 +76,26 @@ class TrainingSet:
             assert check
         return files
         
-    def _create_generator(self, x_files, y_files, batch_size=0):
+    def _create_generator(self, x_files, y_files,
+                          batch_div=0, img_per_file=100):
         """
         Returns a generator who holds (x, y) tuples where each tuple
         is a training batch (here: 100 images).
         The generator runs indefinetly over the data.
-        batch_size has to be smaller than 100.
+        batch_div divides the standard batch size (100) by its value.
+        img_per_file only needs to be given if batch_div is set.
         """
+        if batch_div:
+            batch_div = self._find_divider(batch_div, img_per_file)
+            batch_size = img_per_file // batch_div
         i = 0
         while True:
             inputs = self._file_to_images(x_files[i])
             targets = self._file_to_array(y_files[i])
-            # TODO Use variable batch size. Now it's just online SGD.
-            if batch_size:
-                for j in range(len(inputs)):
-                    yield (np.expand_dims(inputs[j], axis=0),
-                           np.expand_dims(targets[j], axis=0))
+            if batch_div:
+                for j in range(0, img_per_file, batch_size):
+                    yield (inputs[j:j+batch_size],
+                           targets[j:j+batch_size])
             else:
                 yield (inputs, targets)
             i += 1
@@ -96,6 +103,13 @@ class TrainingSet:
             if i == len(x_files):
                 i = 0
     
+    def _find_divider(self, divider, divisor):
+        for i in range(divider, 0, -1):
+            if divisor % divider == 0:
+                return divider
+            else:
+                divider += 1
+                
     def _file_to_images(self, file, xtiles=10, ytiles=10):
         raw = self.cloud.get_file(file[1])
         raw_array = np.frombuffer(raw.read(), dtype=np.int8)
