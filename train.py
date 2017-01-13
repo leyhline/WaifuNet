@@ -12,20 +12,18 @@ from keras.callbacks import ModelCheckpoint, CSVLogger
 import sys
 
 
-SAMPLES_PER_BATCH = 100
-TRAINING_BATCHES = 3000
-TRAINING_SAMPLES = TRAINING_BATCHES * SAMPLES_PER_BATCH
-VALIDATION_BATCHES = 1000
-VALIDATION_SAMPLES = VALIDATION_BATCHES * SAMPLES_PER_BATCH
-EPOCHES=3
-QUERY_SIZE=10
+TRAINING_SAMPLES =   300000
+VALIDATION_SAMPLES = 100000
+EPOCHES=5
+QUERY_SIZE=100
 WORKERS=4  # Only relevant when pickle_save is set in fit_generator()
 
 
 def train():
     tset = TrainingSet()
     tset.initialize("deeplearning/training", "deeplearning/training_txt",
-                    "deeplearning/validation", "deeplearning/validation_txt")
+                    "deeplearning/validation", "deeplearning/validation_txt",
+                    batch_divider=10)
     model = WaifuVGG16()
     model.compile("sgd",
                   "categorical_crossentropy",
@@ -41,7 +39,9 @@ def train():
                                    CSVLogger("train.log", append=False)],
                         validation_data=tset.validation,
                         nb_val_samples=VALIDATION_SAMPLES,
-                        max_q_size=QUERY_SIZE)
+                        max_q_size=QUERY_SIZE
+                        pickle_safe=False,
+                        nb_workers=WORKERS)
     return model, history
 
 
