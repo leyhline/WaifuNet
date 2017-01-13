@@ -39,9 +39,9 @@ def train():
                                    CSVLogger("train.log", append=False)],
                         validation_data=tset.validation,
                         nb_val_samples=VALIDATION_SAMPLES,
-                        max_q_size=QUERY_SIZE
+                        max_q_size=QUERY_SIZE,
                         pickle_safe=False,
-                        nb_workers=WORKERS)
+                        nb_worker=WORKERS)
     return model, history
 
 
