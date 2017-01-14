@@ -14,11 +14,11 @@ import sys
 
 TRAINING_SAMPLES =   300000
 VALIDATION_SAMPLES = 100000
-EPOCHES=5
-BATCH_DIVIDER=20  # Hard to explain... If this one is bigger 
+EPOCHES=1
+BATCH_DIVIDER=100  # Hard to explain... If this one is bigger 
                   # the batch size will become smaller.
 QUERY_SIZE=10 * BATCH_DIVIDER
-VERBOSE=1
+VERBOSE=0
 
 
 def train():
@@ -46,10 +46,4 @@ def train():
 
 
 if __name__ == "__main__":
-    q = ''
-    while q != 'y' or q != 'n':
-        q = input("Start training model? Hope you got enough time at hand. y/n ")
-        if q == 'y':
-            train()
-        if q == 'n':
-            sys.exit()
+    train()

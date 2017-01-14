@@ -94,7 +94,10 @@ class TrainingSet:
             image_name, image_raw = next(image_generator)
             target_name, target_raw = next(target_generator)
             # Check if you really got the right image-target combo.
-            assert image_name[:-5] == target_name[:-4]
+            try:
+                assert image_name[:-5] == target_name[:-4]
+            except AssertionError as e:
+                raise e("Error asserting {} to {}.".format(image_name, target_name))
             inputs = self._raw_to_images(image_raw)
             targets = self._raw_to_array(target_raw)
             if batch_div:
