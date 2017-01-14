@@ -18,6 +18,7 @@ EPOCHES=5
 BATCH_DIVIDER=20  # Hard to explain... If this one is bigger 
                   # the batch size will become smaller.
 QUERY_SIZE=10 * BATCH_DIVIDER
+VERBOSE=1
 
 
 def train():
@@ -34,7 +35,7 @@ def train():
                         tset.training,
                         TRAINING_SAMPLES,
                         EPOCHES,
-                        verbose=1,
+                        verbose=VERBOSE,
                         callbacks=[ModelCheckpoint("train.hdf5",
                                                    save_weights_only=True), 
                                    CSVLogger("train.log", append=False)],

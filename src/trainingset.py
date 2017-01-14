@@ -91,8 +91,12 @@ class TrainingSet:
         image_generator = self._retrieve_raw_data(x_files)
         target_generator = self._retrieve_raw_data(y_files)
         while True:
-            inputs = self._raw_to_images(next(image_generator))
-            targets = self._raw_to_array(next(target_generator))
+            image_name, image_raw = next(image_generator)
+            target_name, target_raw = next(target_generator)
+            # Check if you really got the right image-target combo.
+            assert image_name[:-5] == target_name[:-4]
+            inputs = self._raw_to_images(image_raw)
+            targets = self._raw_to_array(target_raw)
             if batch_div:
                 for j in range(0, img_per_file, batch_size):
                     yield (inputs[j:j+batch_size],
@@ -118,7 +122,8 @@ class TrainingSet:
         # Initialize query with the first few values.
         for i in range(line, initial_size):
             raw = self.cloud.get_file(files[i][1])
-            queue.append(raw)
+            name = files[i][0]
+            queue.append((name, raw))
         line += initial_size
         lock = False
         while True:
@@ -147,7 +152,7 @@ class TrainingSet:
     
     def _get_raw_from_cloud(self, files, output):
         for file in files:
-            output.append(self.cloud.get_file(file[1]))
+            output.append((file[0], self.cloud.get_file(file[1])))
         
     def _raw_to_images(self, raw, xtiles=10, ytiles=10):
         raw_array = np.frombuffer(raw.read(), dtype=np.int8)
