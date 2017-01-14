@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+A simple interface for getting files from pCloud.
+The files will not be downloaded but instead
+returned as Raw class from requests package.
+
 Created on Tue Jan 10 20:26:36 2017
 
-@author: Thomas Leyh
+@copyright: 2017 Thomas Leyh
+@licence: GPLv3
 """
 
 import requests
@@ -28,7 +33,7 @@ class PCloud:
         self._token = r.json()["auth"]
 
     def get_files_in_folder(self, *args):
-        """Get a tuple of (filename, fileid) from the given folder structure."""
+        """Get a list of tuples (filename, fileid) from the given folder structure."""
         root = 0
         for arg in args:
             p = {"auth":self._token, "folderid":root, "nofiles":1}
@@ -51,8 +56,13 @@ class PCloud:
         p_open = {"auth":self._token, "flags":0, "fileid":fileid}
         s = requests.Session()
         r = s.get(self.API + "file_open", params=p_open)
-        self._check_status(r, "Could not get file descriptor.")
-        fd = r.json()["fd"]
+        self._check_status(r, "Could not get file descriptor for fileid {}.".format(fileid))
+        try:
+            fd = r.json()["fd"]
+        except KeyError as e:
+            msg = "Could not get file descriptor for fileid {}.".format(fileid)
+            logging.error(msg)
+            raise e(msg)
         p_read = {"auth":self._token, "fd":fd, "count":max_size}
         data = s.get(self.API + "file_read", params=p_read, stream=True)
         return data.raw

@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+A simple script for building and training a model.
+Just run train() or run the file from command line.
+For me the training time per epoch is around 5 hours.
+
+You don't give arguments to the function but instead edit the
+global variables at the top of the file to control configurations.
+
 Created on Thu Jan 12 21:52:15 2017
 
-@author: Thomas Leyh
+@copyright: 2017 Thomas Leyh
+@licence: GPLv3
 """
 
 from src.model import WaifuVGG16

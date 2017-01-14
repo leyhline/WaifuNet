@@ -1,9 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+This class initialized generators for indefinetly iterating over training 
+and (if specified) validation data.
+This is necessary for the fit_generator-method in keras models.
+
+The data is aquired from pCloud during training. Because of simple multithreading
+there is hopefully not that much delay so most of the data should be
+available without much training delay.
+
+All data is held in memory. There is no need to save files.
+
 Created on Wed Jan 11 07:52:00 2017
 
-@author: Thomas Leyh
+@copyright: 2017 Thomas Leyh
+@licence: GPLv3
 """
 
 import cv2
@@ -34,7 +45,8 @@ class TrainingSet:
     def __init__(self):
         """Ask for username/password for PCloud access."""
         print("Logging into pCloud account.")
-        username = input("Username: ")
+        print("Username:", end=" ")
+        username = input()
         password = getpass()
         self.cloud = PCloud(username, password)
         print("Success!")
@@ -44,11 +56,14 @@ class TrainingSet:
 
     def initialize(self, input_folder, target_folder,
                    validation_folder=None, validation_target_folder=None,
-                   batch_divider=10):
+                   batch_divider=0):
         """
         Initialize generators for iterating over training examples
         and if specified also get generator for validation examples.
         Arguments take the path/to/folder in cloud storage.
+        
+        Standard batch size if 100. The batch_divider is some value
+        between 0 and 100. A larger value reduces the batch size.
         """
         x_files, y_files = self._filelist(input_folder, target_folder)
         self.training = self._create_generator(x_files, y_files,
@@ -73,7 +88,7 @@ class TrainingSet:
         checkpairs = map(lambda inpt, trgt: inpt[0][:-5] == trgt[0][:-4],
                          files[0], files[1])
         for check in checkpairs:
-            assert check
+            assert check, "Training and target data does not fit together."
         return files
         
     def _create_generator(self, x_files, y_files,
@@ -94,10 +109,7 @@ class TrainingSet:
             image_name, image_raw = next(image_generator)
             target_name, target_raw = next(target_generator)
             # Check if you really got the right image-target combo.
-            try:
-                assert image_name[:-5] == target_name[:-4]
-            except AssertionError as e:
-                raise e("Error asserting {} to {}.".format(image_name, target_name))
+            assert image_name[:-5] == target_name[:-4], "{} does not fit to {}.".format(image_name, target_name)
             inputs = self._raw_to_images(image_raw)
             targets = self._raw_to_array(target_raw)
             if batch_div:
@@ -108,6 +120,8 @@ class TrainingSet:
                 yield inputs, targets
     
     def _find_divider(self, divider, divisor):
+        """Returns a divider without remainder for a batch (divisor).
+           The retuned divider is >= divider argument."""
         for i in range(divider, 0, -1):
             if divisor % divider == 0:
                 return divider
@@ -115,9 +129,14 @@ class TrainingSet:
                 divider += 1
     
     def _retrieve_raw_data(self, files,
-                           initial_size=4,
-                           lower_limit=3,
-                           step=3):
+                           initial_size=128,
+                           lower_limit=64,
+                           step=64):
+        """
+        Some kind of data structure where the necessary data is buffered and
+        loaded in advance per simple multithreading.
+        Loops indefinetly over data via generator.
+        """
         # Initialize queue and append values the first time.
         queue = deque()
         temp = files.copy()
@@ -133,7 +152,7 @@ class TrainingSet:
             yield queue.popleft()
             # If the queue is getting too small, download more data and fill it in.
             if len(queue) < lower_limit:
-                # Start a background process to download the data.
+                # Start a background thread to download the data.
                 if not lock:
                     raws = []
                     p = threading.Thread(
@@ -141,7 +160,7 @@ class TrainingSet:
                                     args=(files[line:line + step], raws))
                     p.start()
                     lock = True
-                # If process finished append its downloaded data to queue.
+                # If thread finished append its downloaded data to queue.
                 if not p.is_alive() or len(queue) == 0:
                     p.join()
                     queue.extend(raws)
@@ -154,10 +173,13 @@ class TrainingSet:
                         line = 0
     
     def _get_raw_from_cloud(self, files, output):
+        """Helper function for getting data via seperate thread."""
         for file in files:
             output.append((file[0], self.cloud.get_file(file[1])))
         
     def _raw_to_images(self, raw, xtiles=10, ytiles=10):
+        """Take raw data (actually it's a class from requests package)
+           and decode it to a batch of image arrays. (4 dimensions)"""
         raw_array = np.frombuffer(raw.read(), dtype=np.int8)
         montage = cv2.imdecode(raw_array, cv2.IMREAD_COLOR)
         ysize = montage.shape[0]
@@ -176,6 +198,8 @@ class TrainingSet:
         return images
         
     def _raw_to_array(self, raw, lines=100):
+        """Take raw data (actually it's a class from requests package)
+           and decode it to a batch of binary arrays for classification. (4 dimensions)"""
         mapping = {"dres":0, "japa":1, "nude":2, "scho":3, "shir":4, "swim":5}
         arrays = np.empty((lines, len(mapping)), dtype=np.bool)
         i = 0
@@ -185,5 +209,6 @@ class TrainingSet:
             array[mapping[line]] = True
             arrays[i] = array
             i += 1
+        # Assert correct batch size.
         assert i == lines
         return arrays
