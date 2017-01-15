@@ -20,6 +20,7 @@ import cv2
 import numpy as np
 import threading
 import logging
+import pdb
 from concurrent.futures import ThreadPoolExecutor
 from getpass import getpass
 from collections import deque
@@ -108,6 +109,7 @@ class TrainingSet:
         if batch_div:
             batch_div = self._find_divider(batch_div, img_per_file)
             batch_size = img_per_file // batch_div
+        pdb.set_trace()
         image_generator = self._retrieve_raw_data(x_files)
         target_generator = self._retrieve_raw_data(y_files)
         while True:
@@ -135,9 +137,9 @@ class TrainingSet:
                 divider += 1
     
     def _retrieve_raw_data(self, files,
-                           initial_size=64,
-                           lower_limit=32,
-                           step=64):
+                           initial_size=32,
+                           lower_limit=16,
+                           step=32):
         """
         Some kind of data structure where the necessary data is buffered and
         loaded in advance per simple multithreading.
@@ -148,9 +150,7 @@ class TrainingSet:
         temp = files.copy()
         line = 0
         # Initialize query with the first few values.
-        raws = []
-        self._get_raw_from_cloud(files[line:initial_size], raws)
-        queue.extend(raws)
+        self._get_raw_from_cloud(files[line:initial_size], queue)
         line += initial_size
         lock = False
         while True:
@@ -181,6 +181,7 @@ class TrainingSet:
         """Helper function for getting data via seperate thread."""
         name, fileid = zip(*files)
         with ThreadPoolExecutor(max_workers=workers) as e:
+            logging.info("Receiving files: {}".format(name))
             raw = e.map(self.cloud.get_file, fileid)
         output.extend(zip(name, raw))
         
