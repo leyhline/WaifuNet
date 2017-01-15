@@ -19,9 +19,14 @@ Created on Wed Jan 11 07:52:00 2017
 import cv2
 import numpy as np
 import threading
+import logging
 from getpass import getpass
 from collections import deque
 from .pcloud import PCloud
+
+
+logging.basicConfig(filename="train.log", filemode="w", level=logging.INFO,
+                    format = "%(asctime)s - %(levelname)s - %(message)s")
 
 
 # TODO Look further what this does before you use it.
@@ -108,6 +113,7 @@ class TrainingSet:
             image_name, image_raw = next(image_generator)
             target_name, target_raw = next(target_generator)
             # Check if you really got the right image-target combo.
+            logging.info("Files {} and {} received.".format(image_name, target_name))
             assert image_name[:-5] == target_name[:-4], "{} does not fit to {}.".format(image_name, target_name)
             inputs = self._raw_to_images(image_raw)
             targets = self._raw_to_array(target_raw)
