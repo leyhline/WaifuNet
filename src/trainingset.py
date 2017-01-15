@@ -135,8 +135,8 @@ class TrainingSet:
                 divider += 1
     
     def _retrieve_raw_data(self, files,
-                           initial_size=128,
-                           lower_limit=64,
+                           initial_size=64,
+                           lower_limit=32,
                            step=64):
         """
         Some kind of data structure where the necessary data is buffered and
@@ -148,10 +148,9 @@ class TrainingSet:
         temp = files.copy()
         line = 0
         # Initialize query with the first few values.
-        for i in range(line, initial_size):
-            raw = self.cloud.get_file(files[i][1])
-            name = files[i][0]
-            queue.append((name, raw))
+        raws = []
+        self._get_raw_from_cloud(files[line:initial_size], raws)
+        queue.extend(raws)
         line += initial_size
         lock = False
         while True:
