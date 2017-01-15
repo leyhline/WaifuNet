@@ -20,6 +20,7 @@ import cv2
 import numpy as np
 import threading
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from getpass import getpass
 from collections import deque
 from .pcloud import PCloud
@@ -177,10 +178,12 @@ class TrainingSet:
                         files.extend(temp)
                         line = 0
     
-    def _get_raw_from_cloud(self, files, output):
+    def _get_raw_from_cloud(self, files, output, workers=4):
         """Helper function for getting data via seperate thread."""
-        for file in files:
-            output.append((file[0], self.cloud.get_file(file[1])))
+        name, fileid = zip(*files)
+        with ThreadPoolExecutor(max_workers=workers) as e:
+            raw = e.map(self.cloud.get_file, fileid)
+        output.extend(zip(name, raw))
         
     def _raw_to_images(self, raw, xtiles=10, ytiles=10):
         """Take raw data (actually it's a class from requests package)
