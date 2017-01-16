@@ -20,15 +20,9 @@ import cv2
 import numpy as np
 import threading
 import logging
-import pdb
-from concurrent.futures import ThreadPoolExecutor
 from getpass import getpass
 from collections import deque
 from .pcloud import PCloud
-
-
-logging.basicConfig(filename="train.log", filemode="w", level=logging.INFO,
-                    format = "%(asctime)s - %(levelname)s - %(message)s")
 
 
 # TODO Look further what this does before you use it.
@@ -47,6 +41,10 @@ class TrainingSet:
     Class for getting generators to iterate over training examples.
     These are located at a cloud storage service and are loaded dynamically.
     """
+    
+    log = logging.getLogger("trainingset")
+    log.basicConfig(filename="logs/trainingset.log", filemode="w", level=logging.INFO,
+                    format = "%(asctime)s - %(levelname)s - %(message)s")
     
     def __init__(self):
         """Ask for username/password for PCloud access."""
@@ -109,14 +107,13 @@ class TrainingSet:
         if batch_div:
             batch_div = self._find_divider(batch_div, img_per_file)
             batch_size = img_per_file // batch_div
-        pdb.set_trace()
         image_generator = self._retrieve_raw_data(x_files)
         target_generator = self._retrieve_raw_data(y_files)
         while True:
             image_name, image_raw = next(image_generator)
             target_name, target_raw = next(target_generator)
             # Check if you really got the right image-target combo.
-            logging.info("Files {} and {} received.".format(image_name, target_name))
+            self.log.info("Files {} and {} received.".format(image_name, target_name))
             assert image_name[:-5] == target_name[:-4], "{} does not fit to {}.".format(image_name, target_name)
             inputs = self._raw_to_images(image_raw)
             targets = self._raw_to_array(target_raw)
@@ -146,14 +143,16 @@ class TrainingSet:
         Loops indefinetly over data via generator.
         """
         # Initialize queue and append values the first time.
-        queue = deque()
         temp = files.copy()
         line = 0
         # Initialize query with the first few values.
+        queue = deque()
         self._get_raw_from_cloud(files[line:initial_size], queue)
+        self.log.info("Initialized queue: {} to {}, len {}".format(queue[0], queue[-1], len(queue)))
         line += initial_size
         lock = False
         while True:
+            self.log.Info("Pop element {}".format(queue[0]))
             yield queue.popleft()
             # If the queue is getting too small, download more data and fill it in.
             if len(queue) < lower_limit:
@@ -165,8 +164,10 @@ class TrainingSet:
                                     args=(files[line:line + step], raws))
                     p.start()
                     lock = True
+                    self.log.info("Queue size {}: start thread to get {} to {}.".format(len(queue), files[line], files[line + step]))
                 # If thread finished append its downloaded data to queue.
                 if not p.is_alive() or len(queue) == 0:
+                    self.log.info("Thread finished: is_alive={}, {} to {} len {}".format(p.is_alive(), raws[0], raws[-1], len(raws)))
                     p.join()
                     queue.extend(raws)
                     lock = False
@@ -180,9 +181,7 @@ class TrainingSet:
     def _get_raw_from_cloud(self, files, output, workers=4):
         """Helper function for getting data via seperate thread."""
         name, fileid = zip(*files)
-        with ThreadPoolExecutor(max_workers=workers) as e:
-            logging.info("Receiving files: {}".format(name))
-            raw = e.map(self.cloud.get_file, fileid)
+        raw = map(self.cloud.get_file, fileid)
         output.extend(zip(name, raw))
         
     def _raw_to_images(self, raw, xtiles=10, ytiles=10):
@@ -192,6 +191,9 @@ class TrainingSet:
         montage = cv2.imdecode(raw_array, cv2.IMREAD_COLOR)
         ysize = montage.shape[0]
         xsize = montage.shape[1]
+        # Hardcoded check if this dataset fits to model.
+        assert xsize == 2000
+        assert ysize == 2000
         ytilesize = ysize // ytiles
         xtilesize = xsize // xtiles
         images = np.empty((xtiles*ytiles, ytilesize, xtilesize, 3),
