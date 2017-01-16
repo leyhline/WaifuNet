@@ -132,9 +132,9 @@ class TrainingSet:
                 divider += 1
     
     def _retrieve_raw_data(self, files,
-                           initial_size=32,
-                           lower_limit=16,
-                           step=32):
+                           initial_size=8,
+                           lower_limit=4,
+                           step=8):
         """
         Some kind of data structure where the necessary data is buffered and
         loaded in advance per simple multithreading.
