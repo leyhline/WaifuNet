@@ -25,6 +25,3 @@ loggers:
     trainingset:
         level: INFO
         handlers: [trainingset]
-root:
-  level: WARNING
-  handlers: [console]

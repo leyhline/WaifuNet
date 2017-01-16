@@ -18,6 +18,9 @@ from src.model import WaifuVGG16
 from src.trainingset import TrainingSet
 from keras.callbacks import ModelCheckpoint, CSVLogger
 import sys
+import logging
+import logging.config
+import yaml
 
 
 TRAINING_SAMPLES   = 300000
@@ -27,6 +30,11 @@ BATCH_DIVIDER = 5  # Hard to explain... If this one is bigger
                    # the batch size will become smaller.
 QUERY_SIZE = 10 * BATCH_DIVIDER
 VERBOSE = 1
+
+# Load and configure logging.
+with open("logging.yaml") as f:
+    logging_config = yaml.load(f)
+logging.config.dictConfig(logging_config)
 
 
 def train():

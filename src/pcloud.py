@@ -12,14 +12,6 @@ Created on Tue Jan 10 20:26:36 2017
 
 import requests
 import logging
-import logging.config
-import yaml
-
-
-# Load and configure logging.
-with open(SOURCE_PATH + "/logging.yaml") as f:
-    logging_config = yaml.load(f)
-logging.config.dictConfig(logging_config)
 
 
 class PCloud:

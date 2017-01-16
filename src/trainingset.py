@@ -20,17 +20,9 @@ import cv2
 import numpy as np
 import threading
 import logging
-import logging.config
-import yaml
 from getpass import getpass
 from collections import deque
 from .pcloud import PCloud
-
-
-# Load and configure logging.
-with open(SOURCE_PATH + "/logging.yaml") as f:
-    logging_config = yaml.load(f)
-logging.config.dictConfig(logging_config)
 
 
 # TODO Look further what this does before you use it.
