@@ -146,11 +146,11 @@ class TrainingSet:
         # Initialize query with the first few values.
         queue = deque()
         self._get_raw_from_cloud(files[line:initial_size], queue)
-        self.log.info("Initialized queue: {} to {}, len {}".format(queue[0], queue[-1], len(queue)))
+        self.log.info("Initialized queue: {} to {}, len {}".format(queue[0][0], queue[-1][0], len(queue)))
         line += initial_size
         lock = False
         while True:
-            self.log.Info("Pop element {}".format(queue[0]))
+            self.log.info("Pop element {}".format(queue[0][0]))
             yield queue.popleft()
             # If the queue is getting too small, download more data and fill it in.
             if len(queue) < lower_limit:
