@@ -1,0 +1,30 @@
+version: 1
+formatters:
+    simple:
+        format: '%(asctime)s - %(levelname)s - %(module)s - %(message)s'
+handlers:
+    pcloud:
+        class: logging.FileHandler
+        level: DEBUG
+        formatter: simple
+        filename: logs/pcloud.log
+    trainingset:
+        class: logging.FileHandler
+        level: DEBUG
+        formatter: simple
+        filename: logs/trainingset.log
+    console:
+        class: logging.StreamHandler
+        level: WARNING
+        formatter: simple
+        stream: ext://sys.stderr
+loggers:
+    pcloud:
+        level: INFO
+        handlers: [pcloud]
+    trainingset:
+        level: INFO
+        handlers: [trainingset]
+root:
+  level: WARNING
+  handlers: [console]

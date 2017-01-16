@@ -12,6 +12,14 @@ Created on Tue Jan 10 20:26:36 2017
 
 import requests
 import logging
+import logging.config
+import yaml
+
+
+# Load and configure logging.
+with open(SOURCE_PATH + "/logging.yaml") as f:
+    logging_config = yaml.load(f)
+logging.config.dictConfig(logging_config)
 
 
 class PCloud:
@@ -19,8 +27,6 @@ class PCloud:
     
     API = "https://api.pcloud.com/"
     log = logging.getLogger("pcloud")
-    log.basicConfig(filename="logs/pcloud.log", filemode="w", level=logging.INFO,
-                    format = "%(asctime)s - %(levelname)s - %(message)s")
     
     def __init__(self, username, password):
         """Get access token for further requests."""

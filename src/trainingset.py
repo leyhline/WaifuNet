@@ -20,9 +20,17 @@ import cv2
 import numpy as np
 import threading
 import logging
+import logging.config
+import yaml
 from getpass import getpass
 from collections import deque
 from .pcloud import PCloud
+
+
+# Load and configure logging.
+with open(SOURCE_PATH + "/logging.yaml") as f:
+    logging_config = yaml.load(f)
+logging.config.dictConfig(logging_config)
 
 
 # TODO Look further what this does before you use it.
@@ -43,8 +51,6 @@ class TrainingSet:
     """
     
     log = logging.getLogger("trainingset")
-    log.basicConfig(filename="logs/trainingset.log", filemode="w", level=logging.INFO,
-                    format = "%(asctime)s - %(levelname)s - %(message)s")
     
     def __init__(self):
         """Ask for username/password for PCloud access."""
