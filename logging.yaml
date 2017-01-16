@@ -8,11 +8,13 @@ handlers:
         level: DEBUG
         formatter: simple
         filename: logs/pcloud.log
+        mode: w
     trainingset:
         class: logging.FileHandler
         level: DEBUG
         formatter: simple
         filename: logs/trainingset.log
+        mode: w
     console:
         class: logging.StreamHandler
         level: WARNING
