@@ -18,6 +18,9 @@ class PCloud:
     """Class for loading images from PCloud into memory."""
     
     API = "https://api.pcloud.com/"
+    log = logging.getLogger("pcloud")
+    log.basicConfig(filename="logs/pcloud.log", filemode="w", level=logging.INFO,
+                    format = "%(asctime)s - %(levelname)s - %(message)s")
     
     def __init__(self, username, password):
         """Get access token for further requests."""
@@ -48,6 +51,7 @@ class PCloud:
         contents = r.json()["metadata"]["contents"]
         files = [(file["name"], file["fileid"]) for file in contents
                  if not file["isfolder"]]
+        self.log.info("Got filelist for {}: len {}".format(root, len(files)))
         return files
         
     def get_file(self, fileid, max_size=5242880):
@@ -60,10 +64,11 @@ class PCloud:
             fd = r.json()["fd"]
         except KeyError as e:
             msg = "Could not get file descriptor for fileid {}.".format(fileid)
-            logging.error(msg)
+            self.log.error(msg)
             raise e(msg)
         p_read = {"auth":self._token, "fd":fd, "count":max_size}
         data = s.get(self.API + "file_read", params=p_read, stream=True)
+        self.log.info("Got raw data for {}".format(fileid))
         return data.raw
         
     def _check_status(self, r, error_message=""):
@@ -73,5 +78,5 @@ class PCloud:
             return True
         else:
             msg = str(r.status_code) + " " + r.reason + " " + error_message
-            logging.error(msg)
+            self.log.error(msg)
             raise requests.HTTPError(msg)

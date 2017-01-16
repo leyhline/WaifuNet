@@ -20,13 +20,13 @@ from keras.callbacks import ModelCheckpoint, CSVLogger
 import sys
 
 
-TRAINING_SAMPLES =   300000
+TRAINING_SAMPLES   = 300000
 VALIDATION_SAMPLES = 100000
-EPOCHES=1
-BATCH_DIVIDER=100  # Hard to explain... If this one is bigger 
-                  # the batch size will become smaller.
-QUERY_SIZE=10 * BATCH_DIVIDER
-VERBOSE=0
+EPOCHES = 1
+BATCH_DIVIDER = 5  # Hard to explain... If this one is bigger 
+                   # the batch size will become smaller.
+QUERY_SIZE = 10 * BATCH_DIVIDER
+VERBOSE = 1
 
 
 def train():
@@ -46,7 +46,7 @@ def train():
                         verbose=VERBOSE,
                         callbacks=[ModelCheckpoint("train.hdf5",
                                                    save_weights_only=True), 
-                                   CSVLogger("train.log", append=False)],
+                                   CSVLogger("logs/train.log", append=False)],
                         validation_data=tset.validation,
                         nb_val_samples=VALIDATION_SAMPLES,
                         max_q_size=QUERY_SIZE)
