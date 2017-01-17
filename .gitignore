@@ -92,3 +92,5 @@ ENV/
 
 # Custom stuff
 data/
+test/
+*.hdf5
