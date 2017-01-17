@@ -20,6 +20,7 @@ import cv2
 import numpy as np
 import threading
 import logging
+from os.path import splitext
 from concurrent.futures import ThreadPoolExecutor
 from getpass import getpass
 from collections import deque
@@ -82,10 +83,12 @@ class TrainingSet:
         Get a 2-entry list of the files from the cloud storage.
         Important: The inner lists contain tuples (filename, fileid).
         """
-        files = [self.cloud.get_files_in_folder(*folder.split("/"))
-                 for folder in (input_folder, target_folder)]
-        self.files = files
-        # Is is necessary to sort the file lists? Doesn't seem so.
+        files = (self.cloud.get_files_in_folder(*folder.split("/"))
+                 for folder in (input_folder, target_folder))
+        # Sort the file lists.
+        files = (sorted(flist, key=lambda x: int(splitext(x[0])[0]))
+                 for flist in files)
+        files = tuple(files)
         assert len(files[0]) == len(files[1])
         # Check if you have fitting input and target file pair.
         checkpairs = map(lambda inpt, trgt: inpt[0][:-5] == trgt[0][:-4],
