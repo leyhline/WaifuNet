@@ -105,8 +105,8 @@ class TrainingSet:
         if batch_div:
             batch_div = self._find_divider(batch_div, img_per_file)
             batch_size = img_per_file // batch_div
-        image_generator = self._retrieve_raw_data(x_files)
-        target_generator = self._retrieve_raw_data(y_files)
+        image_generator = self._retrieve_raw_data(x_files, self._raw_to_images)
+        target_generator = self._retrieve_raw_data(y_files, self._raw_to_array)
         while True:
             image_name, image_raw = next(image_generator)
             target_name, target_raw = next(target_generator)
@@ -131,14 +131,14 @@ class TrainingSet:
             else:
                 divider += 1
     
-    def _retrieve_raw_data(self, files,
-                           initial_size=8,
-                           lower_limit=4,
-                           step=8):
+    def _retrieve_raw_data(self, files, processing
+                           initial_size=8, lower_limit=4, step=8):
         """
         Some kind of data structure where the necessary data is buffered and
         loaded in advance per simple multithreading.
         Loops indefinetly over data via generator.
+        files takes a list of tuples (filename, fileid)
+        processing takes a function to apply to the raw data to get a numpy array.
         """
         # Initialize queue and append values the first time.
         temp = files.copy()
