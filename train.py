@@ -48,7 +48,7 @@ def train():
     sgd = SGD(lr=0.001)
     model.compile(sgd,
                   "categorical_crossentropy",
-                  metrics=["accuracy", "categorical_accuracy"])
+                  metrics=["accuracy"])
     if INITIAL_EPOCH:
         print("Loading model weights: train.hdf5")
         model.load_weights("train.hdf5")
