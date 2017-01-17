@@ -20,6 +20,7 @@ import cv2
 import numpy as np
 import threading
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from getpass import getpass
 from collections import deque
 from .pcloud import PCloud
@@ -129,8 +130,8 @@ class TrainingSet:
             else:
                 divider += 1
     
-    def _retrieve_raw_data(self, files, processing
-                           initial_size=8, lower_limit=4, step=8):
+    def _retrieve_raw_data(self, files, processing,
+                           initial_size=16, lower_limit=8, step=16):
         """
         Some kind of data structure where the necessary data is buffered and
         loaded in advance per simple multithreading.
@@ -141,7 +142,7 @@ class TrainingSet:
         # Initialize queue and append values the first time.
         temp = files.copy()
         line = 0
-        function = lambda x: return processing(self.cloud._get_file(x))
+        function = lambda x: processing(self.cloud.get_file(x))
         # Initialize query with the first few values.
         queue = deque()
         self._get_data(files[line:initial_size], function, queue)
@@ -164,8 +165,8 @@ class TrainingSet:
                     self.log.info("Queue size {}: start thread to get {} to {}.".format(len(queue), files[line], files[line + step]))
                 # If thread finished append its downloaded data to queue.
                 if not p.is_alive() or len(queue) == 0:
-                    self.log.info("Thread finished: is_alive={}, {} to {} len {}".format(p.is_alive(), raws[0], raws[-1], len(raws)))
                     p.join()
+                    self.log.info("Thread finished: is_alive={}, {} to {} len {}".format(p.is_alive(), raws[0][0], raws[-1][0], len(raws)))
                     queue.extend(raws)
                     lock = False
                     line += step
@@ -178,7 +179,8 @@ class TrainingSet:
     def _get_data(self, files, function, output, workers=4):
         """Helper function for getting data via seperate thread."""
         name, fileid = zip(*files)
-        raw = map(function, fileid)
+        with ThreadPoolExecutor(max_workers=workers) as e:
+            raw = e.map(function, fileid)
         output.extend(zip(name, raw))
         
     def _raw_to_images(self, raw, xtiles=10, ytiles=10):
