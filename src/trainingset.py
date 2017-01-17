@@ -108,13 +108,11 @@ class TrainingSet:
         image_generator = self._retrieve_raw_data(x_files, self._raw_to_images)
         target_generator = self._retrieve_raw_data(y_files, self._raw_to_array)
         while True:
-            image_name, image_raw = next(image_generator)
-            target_name, target_raw = next(target_generator)
+            image_name, inputs = next(image_generator)
+            target_name, targets = next(target_generator)
             # Check if you really got the right image-target combo.
             self.log.info("Files {} and {} received.".format(image_name, target_name))
             assert image_name[:-5] == target_name[:-4], "{} does not fit to {}.".format(image_name, target_name)
-            inputs = self._raw_to_images(image_raw)
-            targets = self._raw_to_array(target_raw)
             if batch_div:
                 for j in range(0, img_per_file, batch_size):
                     yield (inputs[j:j+batch_size],
@@ -143,9 +141,10 @@ class TrainingSet:
         # Initialize queue and append values the first time.
         temp = files.copy()
         line = 0
+        function = lambda x: return processing(self.cloud._get_file(x))
         # Initialize query with the first few values.
         queue = deque()
-        self._get_raw_from_cloud(files[line:initial_size], queue)
+        self._get_data(files[line:initial_size], function, queue)
         self.log.info("Initialized queue: {} to {}, len {}".format(queue[0][0], queue[-1][0], len(queue)))
         line += initial_size
         lock = False
@@ -158,8 +157,8 @@ class TrainingSet:
                 if not lock:
                     raws = []
                     p = threading.Thread(
-                                    target=self._get_raw_from_cloud,
-                                    args=(files[line:line + step], raws))
+                                    target=self._get_data,
+                                    args=(files[line:line + step], function, raws))
                     p.start()
                     lock = True
                     self.log.info("Queue size {}: start thread to get {} to {}.".format(len(queue), files[line], files[line + step]))
@@ -176,10 +175,10 @@ class TrainingSet:
                         files.extend(temp)
                         line = 0
     
-    def _get_raw_from_cloud(self, files, output, workers=4):
+    def _get_data(self, files, function, output, workers=4):
         """Helper function for getting data via seperate thread."""
         name, fileid = zip(*files)
-        raw = map(self.cloud.get_file, fileid)
+        raw = map(function, fileid)
         output.extend(zip(name, raw))
         
     def _raw_to_images(self, raw, xtiles=10, ytiles=10):
