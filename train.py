@@ -28,7 +28,7 @@ TRAINING_SAMPLES   = 300000
 VALIDATION_SAMPLES = 100000
 EPOCHES = 3
 INITIAL_EPOCH = 0
-BATCH_DIVIDER = 4  # Hard to explain... If this one is bigger 
+BATCH_DIVIDER = 1  # Hard to explain... If this one is bigger 
                    # the batch size will become smaller.
 QUERY_SIZE = 10 * BATCH_DIVIDER
 VERBOSE = 1
@@ -44,8 +44,8 @@ def train():
     tset.initialize("deeplearning/training", "deeplearning/training_txt",
                     "deeplearning/validation", "deeplearning/validation_txt",
                     batch_divider=BATCH_DIVIDER)
-    model = WaifuVGG16()
-    sgd = SGD(lr=0.001)
+    model = SimpleConvNet()
+    sgd = SGD()
     model.compile(sgd,
                   "categorical_crossentropy",
                   metrics=["accuracy"])

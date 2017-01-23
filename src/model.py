@@ -12,7 +12,8 @@ Created on Thu Jan 12 20:59:25 2017
 
 from keras.applications import VGG16
 from keras.models import Sequential
-from keras.layers import Flatten, Dense
+from keras.layers import Convolution2D, MaxPooling2D
+from keras.layers import Flatten, Dense, Dropout
 
 
 def WaifuVGG16():
@@ -27,4 +28,22 @@ def WaifuVGG16():
     model.add(Dense(256, activation="relu", name="fc1"))
     model.add(Dense(256, activation="relu", name="fc2"))
     model.add(Dense(6, activation="softmax", name="predictions"))
+    return model
+
+def SimpleConvNet():
+    model = Sequential()
+    model.add(Convolution2D(64, 3, 3, input_shape=(200, 200, 3), activation="relu"))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Convolution2D(64, 3, 3, activation="relu"))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Convolution2D(128, 3, 3, activation="relu"))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Convolution2D(128, 3, 3, activation="relu"))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Convolution2D(256, 3, 3, activation="relu"))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Flatten())
+    model.add(Dense(512, activation="relu"))
+    model.add(Dropout(0.25))
+    model.add(Dense(6, activation="softmax"))
     return model
