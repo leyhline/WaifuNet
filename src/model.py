@@ -44,6 +44,6 @@ def SimpleConvNet():
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Flatten())
     model.add(Dense(512, activation="relu"))
-    model.add(Dropout(0.25))
+    model.add(Dropout(0.50))
     model.add(Dense(6, activation="softmax"))
     return model

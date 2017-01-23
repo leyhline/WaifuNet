@@ -14,7 +14,7 @@ Created on Thu Jan 12 21:52:15 2017
 @licence: GPLv3
 """
 
-from src.model import WaifuVGG16
+from src.model import *
 from src.trainingset import TrainingSet
 from keras.callbacks import ModelCheckpoint, CSVLogger
 from keras.optimizers import SGD
@@ -28,7 +28,7 @@ TRAINING_SAMPLES   = 300000
 VALIDATION_SAMPLES = 100000
 EPOCHES = 3
 INITIAL_EPOCH = 0
-BATCH_DIVIDER = 1  # Hard to explain... If this one is bigger 
+BATCH_DIVIDER = 4  # Hard to explain... If this one is bigger 
                    # the batch size will become smaller.
 QUERY_SIZE = 10 * BATCH_DIVIDER
 VERBOSE = 1
