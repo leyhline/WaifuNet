@@ -134,7 +134,7 @@ class TrainingSet:
                 divider += 1
     
     def _retrieve_raw_data(self, files, processing,
-                           initial_size=64, lower_limit=64, step=64):
+                           initial_size=64, lower_limit=32, step=64):
         """
         Some kind of data structure where the necessary data is buffered and
         loaded in advance per simple multithreading.
@@ -165,11 +165,11 @@ class TrainingSet:
                                     args=(files[line:line + step], function, raws))
                     p.start()
                     lock = True
-                    self.log.info("Queue size {}: start thread to get {} to {}.".format(len(queue), files[line], files[line + step]))
+                    # self.log.info("Queue size {}: start thread to get {} to {}.".format(len(queue), files[line], files[line + step]))
                 # If thread finished append its downloaded data to queue.
                 if not p.is_alive() or len(queue) == 0:
                     p.join()
-                    self.log.info("Thread finished: is_alive={}, {} to {} len {}".format(p.is_alive(), raws[0][0], raws[-1][0], len(raws)))
+                    # self.log.info("Thread finished: is_alive={}, {} to {} len {}".format(p.is_alive(), raws[0][0], raws[-1][0], len(raws)))
                     queue.extend(raws)
                     lock = False
                     line += step
