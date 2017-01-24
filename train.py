@@ -26,8 +26,8 @@ import yaml
 
 TRAINING_SAMPLES   = 300000
 VALIDATION_SAMPLES = 100000
-EPOCHES = 3
-INITIAL_EPOCH = 0
+EPOCHES = 6
+INITIAL_EPOCH = 3
 BATCH_DIVIDER = 4  # Hard to explain... If this one is bigger 
                    # the batch size will become smaller.
 QUERY_SIZE = 10 * BATCH_DIVIDER
@@ -53,31 +53,21 @@ def train():
         print("Loading model weights: train.hdf5")
         model.load_weights("train.hdf5")
         print("Resume training.")
-        history = model.fit_generator(
-                                    tset.training,
-                                    TRAINING_SAMPLES,
-                                    EPOCHES,
-                                    verbose=VERBOSE,
-                                    callbacks=[ModelCheckpoint("train.hdf5",
-                                                               save_weights_only=True), 
-                                               CSVLogger("logs/train.log", append=True)],
-                                    validation_data=tset.validation,
-                                    nb_val_samples=VALIDATION_SAMPLES,
-                                    max_q_size=QUERY_SIZE,
-                                    initial_epoch=INITIAL_EPOCH)
+        epoches = EPOCHES - INITIAL_EPOCH + 1
     else:
         print("Starting training.")
-        history = model.fit_generator(
-                            tset.training,
-                            TRAINING_SAMPLES,
-                            EPOCHES,
-                            verbose=VERBOSE,
-                            callbacks=[ModelCheckpoint("train.hdf5",
-                                                       save_weights_only=True), 
-                                       CSVLogger("logs/train.log", append=True)],
-                            validation_data=tset.validation,
-                            nb_val_samples=VALIDATION_SAMPLES,
-                            max_q_size=QUERY_SIZE)
+        epoches = EPOCHES
+    history = model.fit_generator(
+                        tset.training,
+                        TRAINING_SAMPLES,
+                        epoches,
+                        verbose=VERBOSE,
+                        callbacks=[ModelCheckpoint("train.hdf5",
+                                                   save_weights_only=True), 
+                                   CSVLogger("logs/train.log", append=True)],
+                        validation_data=tset.validation,
+                        nb_val_samples=VALIDATION_SAMPLES,
+                        max_q_size=QUERY_SIZE)
     return model, history
 
 
