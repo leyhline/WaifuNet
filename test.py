@@ -31,8 +31,9 @@ def test():
                   "categorical_crossentropy",
                   metrics=["accuracy"])
     model.load_weights("train.hdf5")
-    model.evaluate_generator(testset.training,
-                             val_samples=TEST_SAMPLES,
-                             max_q_size=QUERY_SIZE)
+    return model.evaluate_generator(testset.training,
+                                    val_samples=TEST_SAMPLES,
+                                    max_q_size=QUERY_SIZE)
 if __name__ == "__main__":
+    # TODO What is the output? Where to get it from?
     test()
