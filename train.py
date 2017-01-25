@@ -14,11 +14,10 @@ Created on Thu Jan 12 21:52:15 2017
 @licence: GPLv3
 """
 
-from src.model import *
+from src.model import SimpleConvNet
 from src.trainingset import TrainingSet
 from keras.callbacks import ModelCheckpoint, CSVLogger
 from keras.optimizers import SGD
-import sys
 import logging
 import logging.config
 import yaml
