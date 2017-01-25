@@ -84,6 +84,14 @@ def predict(img):
     return model.predict_classes(img)
     
 
+def print_classes(preds):
+    """Prints the filename and the predicted class."""
+    preds = map(lambda x: MAPPING[x], preds)
+    preds = list(preds)
+    for i in range(len(filenames)):
+        print(filenames[i], preds[i], sep=": ")
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: {} image [ images ... ]".format(__file__), file=sys.stderr)
@@ -96,7 +104,4 @@ if __name__ == "__main__":
         img = preprocess(img)
         images[i] = img
     preds = predict(images)
-    preds = map(lambda x: MAPPING[x], preds)
-    preds = list(preds)
-    for i in range(len(filenames)):
-        print(filenames[i], preds[i], sep=": ")
+    print_classes(preds)
