@@ -20,6 +20,7 @@ import cv2
 import numpy as np
 import threading
 import logging
+import random
 from os.path import splitext
 from concurrent.futures import ThreadPoolExecutor
 from getpass import getpass
@@ -27,15 +28,17 @@ from collections import deque
 from .pcloud import PCloud
 
 
-# TODO Look further what this does before you use it.
 def image_preprocessing(img):
-    """Seems it is necessary to subtract the mean of the RGB."""
+    """Some image preprocessing for easier training."""
     # From keras.applications.imagenet_utils
     # Zero-center by mean pixel
-    img[:, :, :, 0] -= 103.939
-    img[:, :, :, 1] -= 116.779
-    img[:, :, :, 2] -= 123.68
-    return img
+    # Subtract BGR mean of all training images. (calculated previously)
+    img[:, :, 0] -= 168.25507492
+    img[:, :, 1] -= 170.20433516
+    img[:, :, 2] -= 185.66395656
+    # Flip image randomly on horizontal axis.
+    if random.getrandbits(1):
+        cv2.flip(img, 1, img)
 
 
 class TrainingSet:
