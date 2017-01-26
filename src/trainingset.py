@@ -33,12 +33,13 @@ def image_preprocessing(img):
     # From keras.applications.imagenet_utils
     # Zero-center by mean pixel
     # Subtract BGR mean of all training images. (calculated previously)
-    img[:, :, 0] -= 168.25507492
-    img[:, :, 1] -= 170.20433516
-    img[:, :, 2] -= 185.66395656
-    # Flip image randomly on horizontal axis.
-    if random.getrandbits(1):
-        cv2.flip(img, 1, img)
+    img[:, :, :, 0] -= 168.25507492
+    img[:, :, :, 1] -= 170.20433516
+    img[:, :, :, 2] -= 185.66395656
+    # Flip image tiles randomly on horizontal axis.
+    for tile in img:
+        if random.getrandbits(1):
+            cv2.flip(tile, 1, tile)
 
 
 class TrainingSet:
@@ -120,6 +121,7 @@ class TrainingSet:
             # Check if you really got the right image-target combo.
             self.log.info("Files {} and {} received.".format(image_name, target_name))
             assert image_name[:-5] == target_name[:-4], "{} does not fit to {}.".format(image_name, target_name)
+            image_preprocessing(inputs)
             if batch_div:
                 for j in range(0, img_per_file, batch_size):
                     yield (inputs[j:j+batch_size],
