@@ -14,7 +14,7 @@ Created on Wed Jan 25 21:05:08 2017
 import numpy as np
 from src.model import SimpleConvNet
 from src.trainingset import TrainingSet
-
+import pdb
 
 TEST_SAMPLES   = 100000
 BATCH_DIVIDER = 4  # Hard to explain... If this one is bigger 
@@ -31,30 +31,20 @@ def test():
                     batch_divider=BATCH_DIVIDER)
     model = SimpleConvNet()
     model.load_weights("train.hdf5")
-    correct = np.zeros(6, dtype=np.int32)
-    incorrect = np.zeros((6, 6), dtype=np.int32)
-    i = 0
-    print(i, TEST_SAMPLES, sep="/")
-    while i < TEST_SAMPLES:
+    result = np.zeros((6, 6), dtype=np.int32)
+    s = 0
+    while s < TEST_SAMPLES:
         img, val = next(testset.training)
-        preds = model.predict_classes(img)
-        val = map(np.argmax, val)
+        preds = model.predict_classes(img, verbose=0)
+        val = list(map(np.argmax, val))
         assert len(preds) == len(val)
         for i in range(len(preds)):
-            if preds[i] == val[i]:
-                correct[preds[i]] += 1
-            else:
-                incorrect[preds[i], val[i]] += 1
-        i += len(preds)
-        print(i, TEST_SAMPLES, sep="/")
-    return correct, incorrect
+            result[preds[i], val[i]] += 1
+        s += len(preds)
+        print(s, TEST_SAMPLES, sep="/")
+    return result
 
 
 if __name__ == "__main__":
-    # TODO What is the output? Where to get it from?
-    correct, incorrect = test()
-    print(MAPPING)
-    print("Correctly predicted:")
-    print(correct)
-    print("Incorrectly predicted:")
-    print(incorrect)
+    result = test()
+    print(result)
