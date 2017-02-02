@@ -18,13 +18,11 @@ Created on Wed Jan 11 07:52:00 2017
 
 import cv2
 import numpy as np
-import threading
 import logging
 import random
 from os.path import splitext
 from concurrent.futures import ThreadPoolExecutor
 from getpass import getpass
-from collections import deque
 from .pcloud import PCloud
 
 
@@ -113,8 +111,8 @@ class TrainingSet:
         if batch_div:
             batch_div = self._find_divider(batch_div, img_per_file)
             batch_size = img_per_file // batch_div
-        image_generator = self._retrieve_raw_data(x_files, self._raw_to_images)
-        target_generator = self._retrieve_raw_data(y_files, self._raw_to_array)
+        image_generator = self._data_from_memory(x_files, self._raw_to_images)
+        target_generator = self._data_from_memory(y_files, self._raw_to_array)
         while True:
             image_name, inputs = next(image_generator)
             target_name, targets = next(target_generator)
@@ -138,63 +136,37 @@ class TrainingSet:
             else:
                 divider += 1
     
-    def _retrieve_raw_data(self, files, processing,
-                           initial_size=32, lower_limit=16, step=16):
-        """
-        Some kind of data structure where the necessary data is buffered and
-        loaded in advance per simple multithreading.
-        Loops indefinetly over data via generator.
-        files takes a list of tuples (filename, fileid)
-        processing takes a function to apply to the raw data to get a numpy array.
-        """
-        # Initialize queue and append values the first time.
-        temp = files.copy()
-        line = 0
-        function = lambda x: processing(self.cloud.get_file(x))
-        # Initialize query with the first few values.
-        queue = deque()
-        self._get_data(files[line:initial_size], function, queue)
-        self.log.info("Initialized queue: {} to {}, len {}".format(queue[0][0], queue[-1][0], len(queue)))
-        line += initial_size
-        lock = False
-        while True:
-            self.log.info("Pop element {}".format(queue[0][0]))
-            yield queue.popleft()
-            # If the queue is getting too small, download more data and fill it in.
-            if len(queue) < lower_limit:
-                # Start a background thread to download the data.
-                if not lock:
-                    raws = []
-                    p = threading.Thread(
-                                    target=self._get_data,
-                                    args=(files[line:line + step], function, raws))
-                    p.start()
-                    lock = True
-                    # self.log.info("Queue size {}: start thread to get {} to {}.".format(len(queue), files[line], files[line + step]))
-                # If thread finished append its downloaded data to queue.
-                if not p.is_alive() or len(queue) == 0:
-                    p.join()
-                    # self.log.info("Thread finished: is_alive={}, {} to {} len {}".format(p.is_alive(), raws[0][0], raws[-1][0], len(raws)))
-                    queue.extend(raws)
-                    lock = False
-                    line += step
-                    # This line is necessary to loop indefinitely over the data.
-                    if line + step > len(files):
-                        files = files[line:]
-                        files.extend(temp)
-                        line = 0
+    def _load_into_memory(self, fileid):
+        """Load all the training data into RAM because it too slow
+           to download everything in every epoch."""
+        with ThreadPoolExecutor(max_workers=4) as e:
+            data = e.map(self._load_into_memory_helper, fileid)
+        # TODO: It may be better to return a zip object.
+        return tuple(data)
+            
+    def _load_into_memory_helper(self, fileid):
+        """Get file from fileid and return its raw binary data."""
+        self.log.info("Downloading file with id: {}".format(fileid))
+        return self.cloud.get_file(fileid).read()
     
-    def _get_data(self, files, function, output, workers=4):
-        """Helper function for getting data via seperate thread."""
+    def _data_from_memory(self, files, processing):
+        """Generator for loading all data into memory once and then
+           indefinetly iterating over it."""
         name, fileid = zip(*files)
-        with ThreadPoolExecutor(max_workers=workers) as e:
-            raw = e.map(function, fileid)
-        output.extend(zip(name, raw))
+        data = self._load_into_memory(fileid)
+        i = 0
+        while True:
+            self.log.info("Pop element {}".format(name[i]))
+            yield name[i], processing(data[i])
+            if i == len(data) - 1:
+                i = 0
+            else:
+                i += 1
         
     def _raw_to_images(self, raw, xtiles=10, ytiles=10):
         """Take raw data (actually it's a class from requests package)
            and decode it to a batch of image arrays. (4 dimensions)"""
-        raw_array = np.frombuffer(raw.read(), dtype=np.int8)
+        raw_array = np.frombuffer(raw, dtype=np.int8)
         montage = cv2.imdecode(raw_array, cv2.IMREAD_COLOR)
         ysize = montage.shape[0]
         xsize = montage.shape[1]
@@ -220,8 +192,10 @@ class TrainingSet:
         mapping = {"nude":0, "scho":1, "swim":2}
         arrays = np.empty((lines, len(mapping)), dtype=np.bool)
         i = 0
-        for line in raw:
-            line = line.decode()[2:6]
+        for line in raw.decode().split("\n"):
+            if not line:
+                continue
+            line = line[2:6]
             array = np.zeros(len(mapping), dtype=np.bool)
             array[mapping[line]] = True
             arrays[i] = array
