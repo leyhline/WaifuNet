@@ -23,10 +23,10 @@ import logging.config
 import yaml
 
 
-TRAINING_SAMPLES   = 300000
-VALIDATION_SAMPLES = 100000
-EPOCHES = 6
-INITIAL_EPOCH = 3
+TRAINING_SAMPLES   = 2000 * 100
+VALIDATION_SAMPLES = 100 * 100
+EPOCHES = 3
+INITIAL_EPOCH = 0
 BATCH_DIVIDER = 4  # Hard to explain... If this one is bigger 
                    # the batch size will become smaller.
 QUERY_SIZE = 10 * BATCH_DIVIDER
@@ -44,7 +44,7 @@ def train():
                     "deeplearning/validation", "deeplearning/validation_txt",
                     batch_divider=BATCH_DIVIDER)
     model = SimpleConvNet()
-    sgd = SGD()
+    sgd = SGD(lr=0.01, momentum=0.9)
     model.compile(sgd,
                   "categorical_crossentropy",
                   metrics=["accuracy"])
@@ -52,7 +52,7 @@ def train():
         print("Loading model weights: train.hdf5")
         model.load_weights("train.hdf5")
         print("Resume training.")
-        epoches = EPOCHES - INITIAL_EPOCH + 1
+        epoches = EPOCHES - INITIAL_EPOCH
     else:
         print("Starting training.")
         epoches = EPOCHES
@@ -62,7 +62,8 @@ def train():
                         epoches,
                         verbose=VERBOSE,
                         callbacks=[ModelCheckpoint("train.hdf5",
-                                                   save_weights_only=True), 
+                                                   save_weights_only=True,
+                                                   verbose=1), 
                                    CSVLogger("logs/train.log", append=True)],
                         validation_data=tset.validation,
                         nb_val_samples=VALIDATION_SAMPLES,

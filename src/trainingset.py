@@ -33,9 +33,9 @@ def image_preprocessing(img):
     # From keras.applications.imagenet_utils
     # Zero-center by mean pixel
     # Subtract BGR mean of all training images. (calculated previously)
-    img[:, :, :, 0] -= 168.25507492
-    img[:, :, :, 1] -= 170.20433516
-    img[:, :, :, 2] -= 185.66395656
+    img[:, :, :, 0] -= 173.40410352
+    img[:, :, :, 1] -= 177.05503129
+    img[:, :, :, 2] -= 192.17966982
     # Flip image tiles randomly on horizontal axis.
     for tile in img:
         if random.getrandbits(1):
@@ -139,7 +139,7 @@ class TrainingSet:
                 divider += 1
     
     def _retrieve_raw_data(self, files, processing,
-                           initial_size=64, lower_limit=32, step=64):
+                           initial_size=32, lower_limit=16, step=16):
         """
         Some kind of data structure where the necessary data is buffered and
         loaded in advance per simple multithreading.
@@ -217,7 +217,7 @@ class TrainingSet:
     def _raw_to_array(self, raw, lines=100):
         """Take raw data (actually it's a class from requests package)
            and decode it to a batch of binary arrays for classification. (4 dimensions)"""
-        mapping = {"dres":0, "japa":1, "nude":2, "scho":3, "shir":4, "swim":5}
+        mapping = {"nude":0, "scho":1, "swim":2}
         arrays = np.empty((lines, len(mapping)), dtype=np.bool)
         i = 0
         for line in raw:

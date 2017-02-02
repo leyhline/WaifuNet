@@ -14,6 +14,7 @@ from keras.applications import VGG16
 from keras.models import Sequential
 from keras.layers import Convolution2D, MaxPooling2D
 from keras.layers import Flatten, Dense, Dropout
+from keras.regularizers import l2
 
 
 def WaifuVGG16():
@@ -32,18 +33,27 @@ def WaifuVGG16():
 
 def SimpleConvNet():
     model = Sequential()
-    model.add(Convolution2D(64, 3, 3, input_shape=(200, 200, 3), activation="relu"))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Convolution2D(64, 3, 3, activation="relu"))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Convolution2D(128, 3, 3, activation="relu"))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Convolution2D(128, 3, 3, activation="relu"))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Convolution2D(256, 3, 3, activation="relu"))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Flatten())
-    model.add(Dense(512, activation="relu"))
-    model.add(Dropout(0.50))
-    model.add(Dense(6, activation="softmax"))
+    model.add(Convolution2D(32, 3, 3, input_shape=(200, 200, 3), activation="relu",
+                            name="block1_conv1", init="glorot_normal"))
+    model.add(MaxPooling2D(name="block1_pool"))
+    model.add(Convolution2D(64, 3, 3, activation="relu", init="glorot_normal",
+                            name="block2_conv1"))
+    model.add(MaxPooling2D(name="block2_pool"))
+    model.add(Convolution2D(128, 3, 3, activation="relu", init="glorot_normal",
+                            name="block3_conv1"))
+    model.add(Convolution2D(128, 3, 3, activation="relu", init="glorot_normal",
+                            name="block3_conv2"))
+    model.add(MaxPooling2D(name="block3_pool"))
+    model.add(Convolution2D(256, 3, 3, activation="relu", init="glorot_normal",
+                            name="block4_conv1"))
+    model.add(Convolution2D(256, 3, 3, activation="relu", init="glorot_normal",
+                            name="block4_conv2"))
+    model.add(MaxPooling2D(name="block4_pool"))
+    model.add(Flatten(name="flatten"))
+    model.add(Dense(256, activation="relu", name="fc1", init="glorot_normal"))
+    model.add(Dropout(0.50, name="dropout1"))
+    model.add(Dense(256, activation="relu", name="fc2", init="glorot_normal"))
+    model.add(Dropout(0.50, name="dropout2"))
+    model.add(Dense(3, activation="softmax", W_regularizer=l2(0.0005), init="glorot_normal",
+                    name="predictions"))
     return model
