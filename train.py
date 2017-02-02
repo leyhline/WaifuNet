@@ -27,7 +27,7 @@ TRAINING_SAMPLES   = 2000 * 100
 VALIDATION_SAMPLES = 100 * 100
 EPOCHES = 3
 INITIAL_EPOCH = 0
-BATCH_DIVIDER = 4  # Hard to explain... If this one is bigger 
+BATCH_DIVIDER = 2  # Hard to explain... If this one is bigger 
                    # the batch size will become smaller.
 QUERY_SIZE = 10 * BATCH_DIVIDER
 VERBOSE = 1
@@ -44,7 +44,7 @@ def train():
                     "deeplearning/validation", "deeplearning/validation_txt",
                     batch_divider=BATCH_DIVIDER)
     model = SimpleConvNet()
-    sgd = SGD(lr=0.01, momentum=0.9)
+    sgd = SGD(lr=0.01)
     model.compile(sgd,
                   "categorical_crossentropy",
                   metrics=["accuracy"])

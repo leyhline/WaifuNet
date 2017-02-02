@@ -41,19 +41,13 @@ def SimpleConvNet():
     model.add(MaxPooling2D(name="block2_pool"))
     model.add(Convolution2D(128, 3, 3, activation="relu", init="glorot_normal",
                             name="block3_conv1"))
-    model.add(Convolution2D(128, 3, 3, activation="relu", init="glorot_normal",
-                            name="block3_conv2"))
     model.add(MaxPooling2D(name="block3_pool"))
     model.add(Convolution2D(256, 3, 3, activation="relu", init="glorot_normal",
                             name="block4_conv1"))
-    model.add(Convolution2D(256, 3, 3, activation="relu", init="glorot_normal",
-                            name="block4_conv2"))
     model.add(MaxPooling2D(name="block4_pool"))
     model.add(Flatten(name="flatten"))
     model.add(Dense(256, activation="relu", name="fc1", init="glorot_normal"))
     model.add(Dropout(0.50, name="dropout1"))
-    model.add(Dense(256, activation="relu", name="fc2", init="glorot_normal"))
-    model.add(Dropout(0.50, name="dropout2"))
-    model.add(Dense(3, activation="softmax", W_regularizer=l2(0.0005), init="glorot_normal",
+    model.add(Dense(3, activation="softmax", init="glorot_normal",
                     name="predictions"))
     return model
