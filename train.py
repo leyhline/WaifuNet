@@ -18,6 +18,7 @@ from src.model import SimpleConvNet
 from src.trainingset import TrainingSet
 from keras.callbacks import ModelCheckpoint, CSVLogger
 from keras.optimizers import SGD
+import os
 import logging
 import logging.config
 import yaml
@@ -40,15 +41,15 @@ logging.config.dictConfig(logging_config)
 
 def train():
     tset = TrainingSet()
-    tset.initialize("deeplearning/training", "deeplearning/training_txt",
-                    "deeplearning/validation", "deeplearning/validation_txt",
+    tset.initialize("deeplearning/compressed_training", "deeplearning/training_txt",
+                    "deeplearning/compressed_validation", "deeplearning/validation_txt",
                     batch_divider=BATCH_DIVIDER)
     model = SimpleConvNet()
     sgd = SGD(lr=0.001)
     model.compile(sgd,
                   "categorical_crossentropy",
                   metrics=["accuracy"])
-    if INITIAL_EPOCH:
+    if INITIAL_EPOCH or os.path.exists("train.hdf5"):
         print("Loading model weights: train.hdf5")
         model.load_weights("train.hdf5")
         print("Resume training.")
