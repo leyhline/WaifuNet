@@ -72,12 +72,20 @@ class TrainingSet:
         between 0 and 100. A larger value reduces the batch size.
         """
         x_files, y_files = self._filelist(input_folder, target_folder)
-        self.training = self._create_generator(x_files, y_files,
+        x_name, x_fid = zip(*x_files)
+        y_name, y_fid = zip(*y_files)
+        self.images = tuple(zip(x_name, self._load_into_memory(x_fid)))
+        self.targets = tuple(zip(y_name, self._load_into_memory(y_fid)))
+        self.training = self._create_generator(self.images, self.targets,
                                                batch_divider)
         if validation_folder and validation_target_folder:
             x_vali, y_vali = self._filelist(validation_folder, 
                                             validation_target_folder)
-            self.validation = self._create_generator(x_vali, y_vali,
+            x_name_val, x_fid_val = zip(*x_vali)
+            y_name_val, y_fid_val = zip(*y_vali)
+            self.images_val = tuple(zip(x_name_val, self._load_into_memory(x_fid_val)))
+            self.targets_val = tuple(zip(y_name_val, self._load_into_memory(y_fid_val)))
+            self.validation = self._create_generator(self.images_val, self.targets_val,
                                                      batch_divider)
             
     def _filelist(self, input_folder, target_folder):
@@ -99,7 +107,7 @@ class TrainingSet:
             assert check, "Training and target data does not fit together."
         return files
         
-    def _create_generator(self, x_files, y_files,
+    def _create_generator(self, imagedata, targetdata,
                           batch_div=0, img_per_file=100):
         """
         Returns a generator who holds (x, y) tuples where each tuple
@@ -111,8 +119,8 @@ class TrainingSet:
         if batch_div:
             batch_div = self._find_divider(batch_div, img_per_file)
             batch_size = img_per_file // batch_div
-        image_generator = self._data_from_memory(x_files, self._raw_to_images)
-        target_generator = self._data_from_memory(y_files, self._raw_to_array)
+        image_generator = self._data_from_memory(imagedata, self._raw_to_images)
+        target_generator = self._data_from_memory(targetdata, self._raw_to_array)
         while True:
             image_name, inputs = next(image_generator)
             target_name, targets = next(target_generator)
@@ -136,28 +144,26 @@ class TrainingSet:
             else:
                 divider += 1
     
-    def _load_into_memory(self, fileid):
+    def _load_into_memory(self, fileid, workers=8):
         """Load all the training data into RAM because it too slow
            to download everything in every epoch."""
-        with ThreadPoolExecutor(max_workers=4) as e:
-            data = e.map(self._load_into_memory_helper, fileid)
+        with ThreadPoolExecutor(max_workers=workers) as e:
+            data = tuple(e.map(self._load_into_memory_helper, fileid))
         # TODO: It may be better to return a zip object.
-        return tuple(data)
+        return data
             
     def _load_into_memory_helper(self, fileid):
         """Get file from fileid and return its raw binary data."""
         self.log.info("Downloading file with id: {}".format(fileid))
         return self.cloud.get_file(fileid).read()
     
-    def _data_from_memory(self, files, processing):
+    def _data_from_memory(self, data, processing):
         """Generator for loading all data into memory once and then
            indefinetly iterating over it."""
-        name, fileid = zip(*files)
-        data = self._load_into_memory(fileid)
         i = 0
         while True:
-            self.log.info("Pop element {}".format(name[i]))
-            yield name[i], processing(data[i])
+            self.log.info("Pop element {}".format(data[i][0]))
+            yield data[i][0], processing(data[i][1])
             if i == len(data) - 1:
                 i = 0
             else:

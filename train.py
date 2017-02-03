@@ -23,13 +23,13 @@ import logging.config
 import yaml
 
 
-TRAINING_SAMPLES   = 2000 * 100
+TRAINING_SAMPLES   = 1000 * 100
 VALIDATION_SAMPLES = 100 * 100
-EPOCHES = 3
+EPOCHES = 50
 INITIAL_EPOCH = 0
 BATCH_DIVIDER = 2  # Hard to explain... If this one is bigger 
                    # the batch size will become smaller.
-QUERY_SIZE = 10 * BATCH_DIVIDER
+QUERY_SIZE = 10
 VERBOSE = 1
 
 # Load and configure logging.
@@ -44,7 +44,7 @@ def train():
                     "deeplearning/validation", "deeplearning/validation_txt",
                     batch_divider=BATCH_DIVIDER)
     model = SimpleConvNet()
-    sgd = SGD(lr=0.01)
+    sgd = SGD(lr=0.001)
     model.compile(sgd,
                   "categorical_crossentropy",
                   metrics=["accuracy"])
