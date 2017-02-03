@@ -155,7 +155,7 @@ class TrainingSet:
     def _load_into_memory_helper(self, fileid):
         """Get file from fileid and return its raw binary data."""
         self.log.info("Downloading file with id: {}".format(fileid))
-        return self.cloud.get_file(fileid).read()
+        return self.cloud.get_file(fileid, 716800).read()
     
     def _data_from_memory(self, data, processing):
         """Generator for loading all data into memory once and then
