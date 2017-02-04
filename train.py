@@ -24,8 +24,8 @@ import logging.config
 import yaml
 
 
-TRAINING_SAMPLES   = 1000 * 100
-VALIDATION_SAMPLES = 100 * 100
+TRAINING_SAMPLES   = 2600 * 100
+VALIDATION_SAMPLES = 200 * 100
 EPOCHES = 50
 INITIAL_EPOCH = 0
 BATCH_DIVIDER = 2  # Hard to explain... If this one is bigger 
@@ -41,8 +41,8 @@ logging.config.dictConfig(logging_config)
 
 def train():
     tset = TrainingSet()
-    tset.initialize("deeplearning/compressed_training", "deeplearning/training_txt",
-                    "deeplearning/compressed_validation", "deeplearning/validation_txt",
+    tset.initialize("deeplearning/training", "deeplearning/training_txt",
+                    "deeplearning/validation", "deeplearning/validation_txt",
                     batch_divider=BATCH_DIVIDER)
     model = SimpleConvNet()
     sgd = SGD(lr=0.001)
@@ -63,8 +63,7 @@ def train():
                         epoches,
                         verbose=VERBOSE,
                         callbacks=[ModelCheckpoint("train.hdf5",
-                                                   save_weights_only=True,
-                                                   verbose=1), 
+                                                   save_weights_only=True),
                                    CSVLogger("logs/train.log", append=True)],
                         validation_data=tset.validation,
                         nb_val_samples=VALIDATION_SAMPLES,

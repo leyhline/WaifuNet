@@ -127,7 +127,6 @@ class TrainingSet:
             # Check if you really got the right image-target combo.
             self.log.info("Files {} and {} received.".format(image_name, target_name))
             assert image_name[:-5] == target_name[:-4], "{} does not fit to {}.".format(image_name, target_name)
-            image_preprocessing(inputs)
             if batch_div:
                 for j in range(0, img_per_file, batch_size):
                     yield (inputs[j:j+batch_size],
@@ -194,8 +193,8 @@ class TrainingSet:
         
     def _raw_to_array(self, raw, lines=100):
         """Take raw data (actually it's a class from requests package)
-           and decode it to a batch of binary arrays for classification. (4 dimensions)"""
-        mapping = {"nude":0, "scho":1, "swim":2}
+           and decode it to a batch of binary arrays for classification."""
+        mapping = {"dres":0, "nude":1, "scho":2, "swim":3}
         arrays = np.empty((lines, len(mapping)), dtype=np.bool)
         i = 0
         for line in raw.decode().split("\n"):
