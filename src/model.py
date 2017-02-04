@@ -48,6 +48,6 @@ def SimpleConvNet():
     model.add(Flatten(name="flatten"))
     model.add(Dense(256, activation="relu", name="fc1", init="glorot_normal"))
     model.add(Dropout(0.50, name="dropout1"))
-    model.add(Dense(3, activation="softmax", init="glorot_normal",
+    model.add(Dense(4, activation="softmax", init="glorot_normal",
                     name="predictions"))
     return model
