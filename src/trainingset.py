@@ -19,25 +19,11 @@ Created on Wed Jan 11 07:52:00 2017
 import cv2
 import numpy as np
 import logging
-import random
 from os.path import splitext
 from concurrent.futures import ThreadPoolExecutor
 from getpass import getpass
 from .pcloud import PCloud
-
-
-def image_preprocessing(img):
-    """Some image preprocessing for easier training."""
-    # From keras.applications.imagenet_utils
-    # Zero-center by mean pixel
-    # Subtract BGR mean of all training images. (calculated previously)
-    img[:, :, :, 0] -= 173.40410352
-    img[:, :, :, 1] -= 177.05503129
-    img[:, :, :, 2] -= 192.17966982
-    # Flip image tiles randomly on horizontal axis.
-    for tile in img:
-        if random.getrandbits(1):
-            cv2.flip(tile, 1, tile)
+from keras.preprocessing.image import ImageDataGenerator
 
 
 class TrainingSet:
@@ -47,6 +33,14 @@ class TrainingSet:
     """
     
     log = logging.getLogger("trainingset")
+    datagen = ImageDataGenerator(rotation_range=30,
+                                 width_shift_range=.2,
+                                 height_shift_range=.2,
+                                 shear_range=.2,
+                                 zoom_range=.2,
+                                 horizontal_flip=True,
+                                 fill_mode="constant",
+                                 rescale=1./255)
     
     def __init__(self):
         """Ask for username/password for PCloud access."""
@@ -127,6 +121,7 @@ class TrainingSet:
             # Check if you really got the right image-target combo.
             self.log.info("Files {} and {} received.".format(image_name, target_name))
             assert image_name[:-5] == target_name[:-4], "{} does not fit to {}.".format(image_name, target_name)
+            inputs = inputs / 255
             if batch_div:
                 for j in range(0, img_per_file, batch_size):
                     yield (inputs[j:j+batch_size],
