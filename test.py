@@ -4,6 +4,9 @@
 Load existing model with trained weights and evaluate
 testset data.
 
+Returns a matrix where the rows are the predictions and the
+columns are the actual categories.
+
 Created on Wed Jan 25 21:05:08 2017
 
 @copyright: 2017 Thomas Leyh
@@ -39,7 +42,6 @@ def test():
         for i in range(len(preds)):
             result[preds[i], val[i]] += 1
         s += len(preds)
-        print(s, TEST_SAMPLES, sep="/")
     return result
 
 
