@@ -14,8 +14,7 @@ import cv2
 import numpy as np
 
 
-MAPPING = np.array(("Dress", "Japanese Clothes", "Nude",
-                    "School Uniform", "Shirt", "Swimsuit"),
+MAPPING = np.array(("Dress", "Nude", "School Uniform", "Swimsuit"),
                     dtype=np.unicode)
 TARGET_SIZE = 200
 FEATURE_DETECTOR = cv2.AKAZE_create()
@@ -73,6 +72,8 @@ def preprocess(img):
     # Crop image if it is not already quadratic.
     if not xsize == ysize:
         dst = crop(dst)
+    # Resize to 1/255
+    dst = np.float32(dst) / 255
     dst = np.expand_dims(dst, axis=0)
     return dst
 
@@ -98,7 +99,7 @@ if __name__ == "__main__":
         sys.exit(1)
     else:
         filenames = sys.argv[1:]
-    images = np.empty((len(filenames), TARGET_SIZE, TARGET_SIZE, 3))
+    images = np.empty((len(filenames), TARGET_SIZE, TARGET_SIZE, 3), dtype=np.float32)
     for i in range(len(filenames)):
         img = cv2.imread(filenames[i])
         img = preprocess(img)
