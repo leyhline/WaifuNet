@@ -15,6 +15,7 @@ Created on Wed Jan 11 07:52:00 2017
 """
 
 
+import numpy as np
 import logging
 import tarfile
 from io import BytesIO
@@ -23,7 +24,7 @@ from os.path import splitext
 from concurrent.futures import ThreadPoolExecutor
 from getpass import getpass
 from .pcloud import PCloud
-from keras.preprocessing.image import ImageDataGenerator
+from .preprocessing import ImageDataGenerator
 
 
 CATEGORIES = ("dres", "nude", "scho", "swim")
@@ -59,7 +60,7 @@ class TrainingSet:
         self.validation = None
         self.testset = None
 
-    def initialize(self, filenames=ARCHIVE_NAMES, workers=4):
+    def initialize(self, filenames=ARCHIVE_NAMES, batch_size=50, workers=4):
         """
         Load training and validation examples into memory.
         Initialize generators for iterating over training examples.
@@ -71,9 +72,9 @@ class TrainingSet:
         files_per_category = map(filter_func, files_per_category)
         with ThreadPoolExecutor(max_workers=workers) as e:
             data = e.map(self._get_data, files_per_category)
-        self._binary_data = dict(zip(CATEGORIES, data))
-        self.data = None
-            
+        data = dict(zip(CATEGORIES, data))
+        self.data = self._init_generators(data, batch_size, filenames=filenames)
+
     def _get_data(self, files, max_size_per_file=1073741824):
         """
         Input is an iterable of (filename, fileid) tuples.
@@ -100,3 +101,34 @@ class TrainingSet:
                     with tf.extractfile(member) as mf:
                         binary_data.append(mf.read())
         return binary_data
+
+    def _init_generators(self, data, batch_size, filenames):
+        """
+        Takes a dictionary of categories:data and returns as many
+        indefinite imagegenerators as there are ARCHIVE_NAMES
+        as a dictionary.
+        """
+        sorted_data = {}
+        basenames = (splitext(filename)[0] for filename in filenames)
+        # Reorder dict of dicts to filename:categories structure.
+        for filename in basenames:
+            sorted_data[filename] = ((cat, data[cat][filename]) for cat in CATEGORIES)
+        datagens = {}
+        for name in sorted_data:
+            X = []
+            y = []
+            for cat, bdatas in sorted_data[name]:
+                cat = self._category_to_array(cat)
+                for bdata in bdatas:
+                    X.append(bdata)
+                    y.append(cat)
+            datagens[name] = self.datagen.flow(X, (200, 200, 3), y, batch_size)
+        return datagens                
+        
+    def _category_to_array(self, category):
+        """
+        Takes a category name as a string and returns a binary numpy array.
+        """
+        narray = np.zeros(len(CATEGORIES), dtype=np.bool)
+        narray[CATEGORIES.index(category)] = True
+        return narray
