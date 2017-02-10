@@ -18,7 +18,7 @@ import numpy as np
 from src.model import SimpleConvNet
 from src.trainingset import TrainingSet
 
-TEST_SAMPLES   = 200 * 1000
+TEST_SAMPLES   = 200 * 100
 BATCH_DIVIDER = 2  # Hard to explain... If this one is bigger 
                    # the batch size will become smaller.
 QUERY_SIZE = 10
