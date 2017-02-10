@@ -14,8 +14,7 @@ Created on Wed Jan 11 07:52:00 2017
 @licence: GPLv3
 """
 
-import cv2
-import numpy as np
+
 import logging
 import tarfile
 from io import BytesIO
@@ -72,7 +71,8 @@ class TrainingSet:
         files_per_category = map(filter_func, files_per_category)
         with ThreadPoolExecutor(max_workers=workers) as e:
             data = e.map(self._get_data, files_per_category)
-        self.data = dict(zip(CATEGORIES, data))
+        self._binary_data = dict(zip(CATEGORIES, data))
+        self.data = None
             
     def _get_data(self, files, max_size_per_file=1073741824):
         """
@@ -100,10 +100,3 @@ class TrainingSet:
                     with tf.extractfile(member) as mf:
                         binary_data.append(mf.read())
         return binary_data
-        
-    def _decode_image(self, data):
-        """
-        Takes raw image data and decodes it to a numpy array.
-        """
-        raw_array = np.frombuffer(data, dtype=np.int8)
-        return cv2.imdecode(raw_array, cv2.IMREAD_COLOR)
