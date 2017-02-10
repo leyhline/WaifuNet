@@ -21,7 +21,7 @@ import tarfile
 from io import BytesIO
 from itertools import cycle
 from os.path import splitext
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from getpass import getpass
 from .pcloud import PCloud
 from keras.preprocessing.image import ImageDataGenerator
@@ -70,8 +70,7 @@ class TrainingSet:
         files_per_category = map(self.cloud.get_files_in_folder, CATEGORIES)
         filter_func = lambda x: filter(lambda y: y[0] in filenames, x)
         files_per_category = map(filter_func, files_per_category)
-        return files_per_category
-        with ProcessPoolExecutor(max_workers=workers) as e:
+        with ThreadPoolExecutor(max_workers=workers) as e:
             data = e.map(self._get_data, files_per_category)
         self.data = dict(zip(CATEGORIES, data))
             
