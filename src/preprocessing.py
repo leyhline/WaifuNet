@@ -13,8 +13,19 @@ from six.moves import range
 import os
 import threading
 import warnings
+import cv2
 
-from .. import backend as K
+
+DIM_ORDERING = "tf"
+EPSILON = 1e-07
+
+
+def decode_image(data):
+    """
+    Takes raw image data and decodes it to a numpy array.
+    """
+    raw_array = np.frombuffer(data, dtype=np.int8)
+    return cv2.imdecode(raw_array, cv2.IMREAD_COLOR)
 
 
 def random_rotation(x, rg, row_index=1, col_index=2, channel_index=0,
@@ -127,7 +138,7 @@ def array_to_img(x, dim_ordering='default', scale=True):
                          'Got array with shape:', x.shape)
 
     if dim_ordering == 'default':
-        dim_ordering = K.image_dim_ordering()
+        dim_ordering = DIM_ORDERING
     if dim_ordering not in {'th', 'tf'}:
         raise ValueError('Invalid dim_ordering:', dim_ordering)
 
@@ -154,7 +165,7 @@ def array_to_img(x, dim_ordering='default', scale=True):
 
 def img_to_array(img, dim_ordering='default'):
     if dim_ordering == 'default':
-        dim_ordering = K.image_dim_ordering()
+        dim_ordering = DIM_ORDERING
     if dim_ordering not in {'th', 'tf'}:
         raise ValueError('Unknown dim_ordering: ', dim_ordering)
     # Numpy array x has format (height, width, channel)
@@ -258,7 +269,7 @@ class ImageDataGenerator(object):
                  preprocessing_function=None,
                  dim_ordering='default'):
         if dim_ordering == 'default':
-            dim_ordering = K.image_dim_ordering()
+            dim_ordering = DIM_ORDERING
         self.__dict__.update(locals())
         self.mean = None
         self.std = None
@@ -455,7 +466,7 @@ class ImageDataGenerator(object):
             broadcast_shape = [1, 1, 1]
             broadcast_shape[self.channel_index - 1] = X.shape[self.channel_index]
             self.std = np.reshape(self.std, broadcast_shape)
-            X /= (self.std + K.epsilon())
+            X /= (self.std + EPSILON)
 
         if self.zca_whitening:
             flatX = np.reshape(X, (X.shape[0], X.shape[1] * X.shape[2] * X.shape[3]))
@@ -520,20 +531,7 @@ class NumpyArrayIterator(Iterator):
                              'should have the same length. '
                              'Found: X.shape = %s, y.shape = %s' % (np.asarray(X).shape, np.asarray(y).shape))
         if dim_ordering == 'default':
-            dim_ordering = K.image_dim_ordering()
-        self.X = np.asarray(X)
-        if self.X.ndim != 4:
-            raise ValueError('Input data in `NumpyArrayIterator` '
-                             'should have rank 4. You passed an array '
-                             'with shape', self.X.shape)
-        channels_axis = 3 if dim_ordering == 'tf' else 1
-        if self.X.shape[channels_axis] not in {1, 3, 4}:
-            raise ValueError('NumpyArrayIterator is set to use the '
-                             'dimension ordering convention "' + dim_ordering + '" '
-                             '(channels on axis ' + str(channels_axis) + '), i.e. expected '
-                             'either 1, 3 or 4 channels on axis ' + str(channels_axis) + '. '
-                             'However, it was passed an array with shape ' + str(self.X.shape) +
-                             ' (' + str(self.X.shape[channels_axis]) + ' channels).')
+            dim_ordering = DIM_ORDERING
         if y is not None:
             self.y = np.asarray(y)
         else:
