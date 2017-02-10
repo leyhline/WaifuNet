@@ -1,6 +1,10 @@
-'''Fairly basic set of tools for real-time data augmentation on image data.
+'''
+Fairly basic set of tools for real-time data augmentation on image data.
 Can easily be extended to include new transformations,
 new preprocessing methods, etc...
+
+Taken from keras.preprocessing.image module and modified to work with
+binary image data. (whitening does not work yet)
 '''
 from __future__ import absolute_import
 from __future__ import print_function
@@ -300,10 +304,10 @@ class ImageDataGenerator(object):
                              'a tuple or list of two floats. '
                              'Received arg: ', zoom_range)
 
-    def flow(self, X, y=None, batch_size=32, shuffle=True, seed=None,
+    def flow(self, X, X_shape, y=None, batch_size=32, shuffle=True, seed=None,
              save_to_dir=None, save_prefix='', save_format='jpeg'):
         return NumpyArrayIterator(
-            X, y, self,
+            X, X_shape, y, self,
             batch_size=batch_size, shuffle=shuffle, seed=seed,
             dim_ordering=self.dim_ordering,
             save_to_dir=save_to_dir, save_prefix=save_prefix, save_format=save_format)
@@ -522,7 +526,7 @@ class Iterator(object):
 
 class NumpyArrayIterator(Iterator):
 
-    def __init__(self, X, y, image_data_generator,
+    def __init__(self, X, X_shape, y, image_data_generator,
                  batch_size=32, shuffle=False, seed=None,
                  dim_ordering='default',
                  save_to_dir=None, save_prefix='', save_format='jpeg'):
@@ -532,6 +536,8 @@ class NumpyArrayIterator(Iterator):
                              'Found: X.shape = %s, y.shape = %s' % (np.asarray(X).shape, np.asarray(y).shape))
         if dim_ordering == 'default':
             dim_ordering = DIM_ORDERING
+        self.X = X
+        self.X_shape = X_shape
         if y is not None:
             self.y = np.asarray(y)
         else:
@@ -541,7 +547,7 @@ class NumpyArrayIterator(Iterator):
         self.save_to_dir = save_to_dir
         self.save_prefix = save_prefix
         self.save_format = save_format
-        super(NumpyArrayIterator, self).__init__(X.shape[0], batch_size, shuffle, seed)
+        super(NumpyArrayIterator, self).__init__(len(X), batch_size, shuffle, seed)
 
     def next(self):
         # for python 2.x.
@@ -551,9 +557,10 @@ class NumpyArrayIterator(Iterator):
         with self.lock:
             index_array, current_index, current_batch_size = next(self.index_generator)
         # The transformation of images is not under thread lock so it can be done in parallel
-        batch_x = np.zeros(tuple([current_batch_size] + list(self.X.shape)[1:]))
+        batch_x = np.zeros(tuple([current_batch_size] + list(self.X_shape)))
         for i, j in enumerate(index_array):
             x = self.X[j]
+            x = decode_image(x)
             x = self.image_data_generator.random_transform(x.astype('float32'))
             x = self.image_data_generator.standardize(x)
             batch_x[i] = x
