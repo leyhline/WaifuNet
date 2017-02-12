@@ -18,9 +18,8 @@ import numpy as np
 from src.model import SimpleConvNet
 from src.trainingset import TrainingSet
 
-TEST_SAMPLES   = 200 * 100
-BATCH_DIVIDER = 2  # Hard to explain... If this one is bigger 
-                   # the batch size will become smaller.
+TEST_SAMPLES   = 20000
+BATCH_SIZE=50
 QUERY_SIZE = 10
 MAPPING = np.array(("Dress", "Nude", "School Uniform", "Swimsuit"),
                     dtype=np.unicode)
@@ -28,14 +27,14 @@ MAPPING = np.array(("Dress", "Nude", "School Uniform", "Swimsuit"),
 
 def test():
     testset = TrainingSet()
-    testset.initialize("deeplearning/testset", "deeplearning/testset_txt",
-                    batch_divider=BATCH_DIVIDER)
+    testset.initialize(filenames=("testset.tar",), batch_size=50, workers=4,
+                       augment={"testset":False})
     model = SimpleConvNet()
     model.load_weights("train.hdf5")
     result = np.zeros((4, 4), dtype=np.int32)
     s = 0
     while s < TEST_SAMPLES:
-        img, val = next(testset.training)
+        img, val = next(testset.data["training"])
         preds = model.predict_classes(img, verbose=0)
         val = list(map(np.argmax, val))
         assert len(preds) == len(val)
@@ -47,4 +46,5 @@ def test():
 
 if __name__ == "__main__":
     result = test()
+    result.savetxt("testresult.csv", result, delimiter=",", fmt="%u")
     print(result)
