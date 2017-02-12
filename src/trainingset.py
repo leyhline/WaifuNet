@@ -48,13 +48,13 @@ class TrainingSet:
                                  fill_mode="nearest",
                                  rescale=1./255)
     # Image data genegator which does no augmentation.
-    datagen_noaug = ImageDataGenerator()
+    datagen_noaug = ImageDataGenerator(rescale=1./255)
     
     def __init__(self, username=None, password=None):
         """Ask for username/password for PCloud access."""
         print("Logging into pCloud account.")
         if not username or not password:
-            username = input(prompt="Username: ")
+            username = input("Username: ")
             password = getpass(prompt="Password: ")
         self.cloud = PCloud(username, password)
         print("Success!")
