@@ -29,6 +29,7 @@ from .preprocessing import ImageDataGenerator
 
 CATEGORIES = ("dres", "nude", "scho", "swim")
 ARCHIVE_NAMES = ("training.tar", "validation.tar")
+AUGMENT = {"training":True, "validation":False}
 
 
 class TrainingSet:
@@ -46,6 +47,8 @@ class TrainingSet:
                                  horizontal_flip=True,
                                  fill_mode="nearest",
                                  rescale=1./255)
+    # Image data genegator which does no augmentation.
+    datagen_noaug = ImageDataGenerator()
     
     def __init__(self, username=None, password=None):
         """Ask for username/password for PCloud access."""
@@ -60,7 +63,8 @@ class TrainingSet:
         self.validation = None
         self.testset = None
 
-    def initialize(self, filenames=ARCHIVE_NAMES, batch_size=50, workers=4):
+    def initialize(self, filenames=ARCHIVE_NAMES, batch_size=50, workers=4,
+                   augment=AUGMENT):
         """
         Load training and validation examples into memory.
         Initialize generators for iterating over training examples.
@@ -73,7 +77,8 @@ class TrainingSet:
         with ThreadPoolExecutor(max_workers=workers) as e:
             data = e.map(self._get_data, files_per_category)
         data = dict(zip(CATEGORIES, data))
-        self.data = self._init_generators(data, batch_size, filenames=filenames)
+        self.data = self._init_generators(data, batch_size, filenames=filenames,
+                                          augment=augment)
 
     def _get_data(self, files, max_size_per_file=1073741824):
         """
@@ -102,7 +107,7 @@ class TrainingSet:
                         binary_data.append(mf.read())
         return binary_data
 
-    def _init_generators(self, data, batch_size, filenames):
+    def _init_generators(self, data, batch_size, filenames, augment):
         """
         Takes a dictionary of categories:data and returns as many
         indefinite imagegenerators as there are ARCHIVE_NAMES
@@ -122,7 +127,12 @@ class TrainingSet:
                 for bdata in bdatas:
                     X.append(bdata)
                     y.append(cat)
-            datagens[name] = self.datagen.flow(X, (200, 200, 3), y, batch_size)
+            # TODO: This is not very robust if the AUGMENT dict is incomplete.
+            if augment[name]:
+                datagens[name] = self.datagen.flow(X, (200, 200, 3), y, batch_size)
+            elif not augment[name]:
+                datagens[name] = self.datagen_noaug.flow(X, (200, 200, 3), y,
+                                        batch_size, shuffle=False)
         return datagens                
         
     def _category_to_array(self, category):
