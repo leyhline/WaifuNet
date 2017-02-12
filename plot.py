@@ -30,5 +30,5 @@ if __name__ == "__main__":
     else:
         print("Usage: {} [ csv-file ]".format(__file__), file=sys.stderr)
         sys.exit(1)        
-    plt.plotfile(filename, cols=range(0,5), subplots=False)
+    plt.plotfile(filename, cols=range(0,5), subplots=False, linewidth=2)
     plt.show()
