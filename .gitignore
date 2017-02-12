@@ -98,3 +98,4 @@ test/
 logs/
 *.hdf5
 testresult.csv
+weights/

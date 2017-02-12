@@ -52,7 +52,7 @@ def train():
         model.load_weights(WEIGHTS_FILE)
         log_last_line = os.popen("tail -n1 " + LOG_FILE).readline().split(",")
         try:
-            initial = int(log_last_line[0])
+            initial = int(log_last_line[0]) + 1
         except ValueError as e:
             e.args = ("Error: Could not read logfile: " + LOG_FILE,)
             raise e
