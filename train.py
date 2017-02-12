@@ -27,10 +27,11 @@ import yaml
 TRAINING_SAMPLES   = 260000
 VALIDATION_SAMPLES = 20000
 EPOCHES = 50
-INITIAL_EPOCH = 0
-BATCH_SIZE=80
+BATCH_SIZE=50
 QUERY_SIZE = 10
 VERBOSE = 1
+LOG_FILE = "logs/train.log"
+WEIGHTS_FILE = "train.hdf5"
 
 # Load and configure logging.
 with open("logging.yaml") as f:
@@ -42,29 +43,35 @@ def train():
     tset = TrainingSet()
     tset.initialize(batch_size=BATCH_SIZE)
     model = SimpleConvNet()
-    sgd = SGD(lr=0.001)
+    sgd = SGD(lr=0.01)
     model.compile(sgd,
                   "categorical_crossentropy",
                   metrics=["accuracy"])
-    if INITIAL_EPOCH or os.path.exists("train.hdf5"):
-        print("Loading model weights: train.hdf5")
-        model.load_weights("train.hdf5")
-        print("Resume training.")
-        epoches = EPOCHES - INITIAL_EPOCH
+    if os.path.exists(WEIGHTS_FILE) and os.path.exists(LOG_FILE):
+        print("Loading model weights: " + WEIGHTS_FILE)
+        model.load_weights(WEIGHTS_FILE)
+        log_last_line = os.popen("tail -n1 " + LOG_FILE).readline().split(",")
+        try:
+            initial = int(log_last_line[0])
+        except ValueError as e:
+            e.args = ("Error: Could not read logfile: " + LOG_FILE,)
+            raise e
+        print("Resume training from epoch {}.".format(initial))
     else:
         print("Starting training.")
-        epoches = EPOCHES
+        initial = 0
     history = model.fit_generator(
                         tset.data["training"],
                         TRAINING_SAMPLES,
-                        epoches,
+                        EPOCHES,
                         verbose=VERBOSE,
-                        callbacks=[ModelCheckpoint("train.hdf5",
+                        callbacks=[ModelCheckpoint(WEIGHTS_FILE,
                                                    save_weights_only=True),
-                                   CSVLogger("logs/train.log", append=True)],
+                                   CSVLogger(LOG_FILE, append=True)],
                         validation_data=tset.data["validation"],
                         nb_val_samples=VALIDATION_SAMPLES,
-                        max_q_size=QUERY_SIZE)
+                        max_q_size=QUERY_SIZE,
+                        initial_epoch=initial)
     return model, history
 
 
