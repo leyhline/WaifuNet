@@ -22,12 +22,17 @@ import os
 import logging
 import logging.config
 import yaml
+try:
+    from credentials import USERNAME, PASSWORD
+except ImportError:
+    USERNAME = None
+    PASSWORD = None
 
 
 TRAINING_SAMPLES   = 260000
 VALIDATION_SAMPLES = 20000
-EPOCHES = 50
-BATCH_SIZE=50
+EPOCHES = 40
+BATCH_SIZE = 50
 QUERY_SIZE = 10
 VERBOSE = 1
 LOG_FILE = "logs/train.log"
@@ -40,7 +45,7 @@ logging.config.dictConfig(logging_config)
 
 
 def train():
-    tset = TrainingSet()
+    tset = TrainingSet(USERNAME, PASSWORD)
     tset.initialize(batch_size=BATCH_SIZE)
     model = SimpleConvNet()
     sgd = SGD(lr=0.01)

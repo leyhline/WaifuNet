@@ -17,17 +17,23 @@ Created on Wed Jan 25 21:05:08 2017
 import numpy as np
 from src.model import SimpleConvNet
 from src.trainingset import TrainingSet
+try:
+    from credentials import USERNAME, PASSWORD
+except ImportError:
+    USERNAME = None
+    PASSWORD = None
+
 
 WEIGHTS_FILE = "train.hdf5"
-TEST_SAMPLES   = 20000
-BATCH_SIZE=50
+TEST_SAMPLES = 20000
+BATCH_SIZE = 50
 QUERY_SIZE = 10
 MAPPING = np.array(("Dress", "Nude", "School Uniform", "Swimsuit"),
                     dtype=np.unicode)
 
 
 def test():
-    testset = TrainingSet()
+    testset = TrainingSet(USERNAME, PASSWORD)
     testset.initialize(filenames=("testset.tar",), batch_size=BATCH_SIZE, workers=4,
                        augment={"testset":False})
     model = SimpleConvNet()
