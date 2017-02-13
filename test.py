@@ -18,6 +18,7 @@ import numpy as np
 from src.model import SimpleConvNet
 from src.trainingset import TrainingSet
 
+WEIGHTS_FILE = "train.hdf5"
 TEST_SAMPLES   = 20000
 BATCH_SIZE=50
 QUERY_SIZE = 10
@@ -30,7 +31,7 @@ def test():
     testset.initialize(filenames=("testset.tar",), batch_size=BATCH_SIZE, workers=4,
                        augment={"testset":False})
     model = SimpleConvNet()
-    model.load_weights("train.hdf5")
+    model.load_weights(WEIGHTS_FILE)
     result = np.zeros((4, 4), dtype=np.int32)
     s = 0
     while s < TEST_SAMPLES:
