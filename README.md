@@ -6,7 +6,10 @@ Step 4: Network architecture
 --------------
 ~~Use TensorFlow. (Yuck! Google!)~~
 
-Better: Use [Keras](https://keras.io/) with TensorFlow backend.
+~~Better: Use [Keras](https://keras.io/) with TensorFlow backend.~~
+
+Seems like Keras got integrated into TensorFlow. Furthermore it seems like Keras sucks for more involved layers. Conclusion: Use TensorFlow.
+
 And read a lot of papers/tutorials.
 
 Ideas: 
@@ -29,3 +32,10 @@ Inspiration
 * http://mattya.github.io/chainer-DCGAN/ (source of repo image)
 * http://waifu2x.udp.jp/
 * http://paintschainer.preferred.tech/
+* http://illustration2vec.net/
+
+What to do next
+----------------
+(When there's time; hopefully starting October.)
+
+Train a network on multi-labeling of images like in http://illustration2vec.net/. But use some state-of-the-art networks like ResNet or Inception or Inception-ResNet or whatever. Next use these weights for implementing Deepdreaming.
