@@ -102,4 +102,17 @@
   keywords      = {cs.CV},
 }
 
+@thesis{Hermans:2276711,
+  author        = "Hermans, Joeri and Spanakis, Gerasimos and Möckel, Rico
+                   and Baranowski, Zbigniew and Canali, Luca",
+  title         = "{On Scalable Deep Learning and Parallelizing Gradient
+                   Descent}",
+  month         = "Jul",
+  year          = "2017",
+  reportNumber  = "CERN-THESIS-2017-103",
+  url           = "http://cds.cern.ch/record/2276711",
+  note          = "Presented 06 Jul 2017",
+  abstract = {Speeding up gradient based methods has been a subject of interest over the past years with many practical applications, especially with respect to Deep Learning. Despite the fact that many optimizations have been done on a hardware level, the convergence rate of very large models remains problematic. Therefore, data parallel methods next to mini-batch parallelism have been suggested to further decrease the training time of parameterized models using gradient based methods. Nevertheless, asynchronous optimization was considered too unstable for practical purposes due to a lacking understanding of the underlying mechanisms. Recently, a theoretical contribution has been made which defines asynchronous optimization in terms of (implicit) momentum due to the presence of a queuing model of gradients based on past parameterizations. This thesis mainly builds upon this work to construct a better understanding why asynchronous optimization shows proportionally more divergent behavior when the number of parallel workers increases, and how this affects existing distributed optimization algorithms. Furthermore, using our redefinition of parameter staleness, we construct two novel techniques for asynchronous optimization, i.e., AGN and ADAG. This work shows that these methods outperform existing methods, and are more robust to (distributed) hyperparameterization contrary to existing distributed optimization algorithms such as DOWNPOUR, (A)EASGD, and DynSGD. Additionally, this thesis presents several smaller contributions. First, we show that the convergence rate of EASGD derived algorithms is impaired by an equilibrium condition. However, this equilibrium condition makes sure that EASGD does not overfit quickly. Finally, we introduce a new metric, temporal efficiency, to evaluate distributed optimization algorithms against each other.},
+}
+
 @Comment{jabref-meta: databaseType:biblatex;}
